@@ -90,6 +90,7 @@ export interface GameState {
   streak: number;
   lastSessionDate: string | null; // ISO string
   streakFreezeActive: boolean;
+  heartsLastRefill: string | null; // ISO string
 }
 
 // --- Exercise Types ---

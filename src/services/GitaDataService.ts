@@ -610,10 +610,37 @@ class GitaDataService {
       streak: 0,
       lastSessionDate: null,
       streakFreezeActive: false,
+      heartsLastRefill: new Date().toISOString(),
     };
     try {
       const data = await AsyncStorage.getItem('game_state');
-      return data ? { ...defaultState, ...JSON.parse(data) } : defaultState;
+      const savedState = data ? JSON.parse(data) : {};
+      
+      let state: GameState = { ...defaultState, ...savedState };
+
+      // Heart refill logic
+      if (state.hearts < 5) {
+        const now = new Date();
+        const lastRefill = new Date(state.heartsLastRefill || now);
+        const diffHours = (now.getTime() - lastRefill.getTime()) / (1000 * 60 * 60);
+        
+        const heartsToRefill = Math.floor(diffHours / 4); // 1 heart every 4 hours
+
+        if (heartsToRefill > 0) {
+          const newHearts = Math.min(5, state.hearts + heartsToRefill);
+          state.hearts = newHearts;
+          if (newHearts === 5) {
+            state.heartsLastRefill = now.toISOString();
+          } else {
+            // Adjust last refill time to account for the partial hour
+            const newRefillTime = new Date(lastRefill.getTime() + heartsToRefill * 4 * 60 * 60 * 1000);
+            state.heartsLastRefill = newRefillTime.toISOString();
+          }
+          await this.saveGameState(state);
+        }
+      }
+
+      return state;
     } catch (error) {
       console.error('Error getting game state:', error);
       return defaultState;
@@ -623,6 +650,12 @@ class GitaDataService {
   async saveGameState(newState: Partial<GameState>): Promise<void> {
     try {
       const currentState = await this.getGameState();
+      
+      // If hearts are being reduced and were previously full, start the refill timer
+      if (newState.hearts && newState.hearts < currentState.hearts && currentState.hearts === 5) {
+        newState.heartsLastRefill = new Date().toISOString();
+      }
+
       const updatedState = { ...currentState, ...newState };
       await AsyncStorage.setItem('game_state', JSON.stringify(updatedState));
     } catch (error) {
