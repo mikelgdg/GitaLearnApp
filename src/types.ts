@@ -5,7 +5,7 @@ export interface Verse {
   transliteracion: string;
   traduccion: string;
   comentario?: string;
-  audioUrl?: string;
+  audioUrl?: string; // URL for verse pronunciation
 }
 
 export interface StudyProgress {
@@ -84,6 +84,96 @@ export interface LearningPath {
   };
 }
 
+// --- PRIORITY 1: NEW STRUCTURE TYPES ---
+
+export interface Section {
+  id: string;
+  title: string;
+  description: string;
+  chapters: number[];
+  unlockRequirement: string;
+  color: string;
+  icon: string;
+  status: 'locked' | 'unlocked' | 'completed';
+  progress: number; // 0-100 percentage
+}
+
+export interface NewUnit {
+  id: string;
+  sectionId: string;
+  title: string;
+  description: string;
+  verses: string[]; // Array de verse IDs
+  checkpointRequired: boolean;
+  unlockRequirement: string;
+  status: 'locked' | 'unlocked' | 'completed';
+  completionPercentage: number; // 0-100
+}
+
+export interface CheckpointExam {
+  unitId: string;
+  questions: CheckpointQuestion[];
+  passingScore: number; // 80%
+  maxAttempts: number; // 3
+  gemsReward: number; // 100
+  unlockReward: string; // next unit ID
+}
+
+export interface CheckpointQuestion {
+  type: 'multiple_choice' | 'audio' | 'fill_blank' | 'match_meaning';
+  verseId: string;
+  question: string;
+  options?: string[];
+  correctAnswer: string;
+  points: number; // 1-2 points each
+}
+
+export interface CheckpointResult {
+  score: number; // 0-100
+  passed: boolean;
+  attemptsUsed: number;
+  weakVerses: string[]; // verseIds that need review
+}
+
+// --- LESSON COMPLETION SCREEN ---
+
+export interface LessonSummary {
+  xpGained: number;
+  gemsEarned: number;
+  accuracy: number; // 0-100
+  perfectAnswers: number;
+  totalAnswers: number;
+  streakDays: number;
+  masteryStarsGained: number;
+  achievementsUnlocked: Achievement[];
+  motivationalMessage: string;
+  nextLessonUnlocked?: string;
+}
+
+// --- GEMS SYSTEM ---
+
+export interface GemEarning {
+  lessonComplete: number; // 10
+  perfectLesson: number; // 15
+  firstTryPerfect: number; // 20
+  unitComplete: number; // 50
+  checkpointPass: number; // 100
+  dailyStreak: number; // 5
+  weeklyStreak: number; // 25
+  achievementUnlock: number; // 15-100
+  leaderboardRank: number; // 25
+}
+
+export interface ShopItem {
+  id: string;
+  name: string;
+  description: string;
+  cost: number;
+  icon: string;
+  effect: string;
+  category: 'hearts' | 'boosts' | 'cosmetics' | 'utils';
+}
+
 export interface GameState {
   xp: number;
   gems: number;
@@ -107,7 +197,7 @@ export enum ExerciseType {
   MULTIPLE_CHOICE_TRANSLATION = 'MULTIPLE_CHOICE_TRANSLATION',
   COMPLETE_THE_VERSE = 'COMPLETE_THE_VERSE',
   MATCH_THE_WORDS = 'MATCH_THE_WORDS',
-  LISTEN_AND_CHOOSE = 'LISTEN_AND_CHOOSE',
+  LISTEN_AND_SELECT = 'LISTEN_AND_SELECT', // Audio exercise
 }
 
 export interface MultipleChoiceOption {
@@ -127,30 +217,19 @@ export interface MultipleChoiceExercise extends BaseExercise {
   correctOptionId: string;
 }
 
-export interface ListenExercise extends BaseExercise {
-  type: ExerciseType.LISTEN_AND_CHOOSE;
-  question: string; // e.g., "Select the correct transliteration"
-  options: MultipleChoiceOption[];
-  correctOptionId: string;
-}
-
-export interface WordPair {
-  id: string;
-  sanskrit: string;
-  translation: string;
-}
-
-export interface MatchTheWordsExercise extends BaseExercise {
-  type: ExerciseType.MATCH_THE_WORDS;
-  question: string; // e.g., "Match the words with their meaning"
-  pairs: WordPair[];
-}
-
 export interface CompleteTheVerseExercise extends BaseExercise {
   type: ExerciseType.COMPLETE_THE_VERSE;
   question: string; // The verse with a blank
   answer: string; // The word that fills the blank
 }
 
+export interface ListenAndSelectExercise extends BaseExercise {
+  type: ExerciseType.LISTEN_AND_SELECT;
+  question: string; // Instructions like "Listen and select the correct translation"
+  audioUrl: string; // URL to the verse audio
+  options: MultipleChoiceOption[];
+  correctOptionId: string;
+}
+
 // A union type for all possible exercises
-export type Exercise = MultipleChoiceExercise | CompleteTheVerseExercise | ListenExercise | MatchTheWordsExercise;
+export type Exercise = MultipleChoiceExercise | CompleteTheVerseExercise | ListenAndSelectExercise;

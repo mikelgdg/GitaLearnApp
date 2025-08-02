@@ -15,10 +15,15 @@ import {
   Exercise,
   ExerciseType,
   MultipleChoiceExercise,
-  ListenExercise,
-  MultipleChoiceOption
+  ListenAndSelectExercise,
+  MultipleChoiceOption,
+  Section,
+  NewUnit,
+  LessonSummary
 } from '../types';
 import versesData from '../../assets/data/verses.json';
+import { SECTIONS, FOUNDATION_UNITS, ACTION_UNITS } from '../constants/sections';
+import { GemEarningService } from './GemEarningService';
 
 // Constantes para almacenamiento local
 const STORAGE_KEYS = {
@@ -28,10 +33,14 @@ const STORAGE_KEYS = {
   ACHIEVEMENTS: 'achievements',
   SETTINGS: 'app_settings',
   FAVORITE_VERSES: 'favorite_verses',
+  GAME_STATE: 'game_state',
+  SECTIONS_PROGRESS: 'sections_progress',
+  UNITS_PROGRESS: 'units_progress',
+  CHECKPOINT_RESULTS: 'checkpoint_results',
 };
 
 class GitaDataService {
-  private verses: Verse[] = versesData as Verse[];
+  private readonly verses: Verse[] = versesData as Verse[];
   
   // ==================== VERSES ====================
   
@@ -765,7 +774,7 @@ class GitaDataService {
         case ExerciseType.MULTIPLE_CHOICE_TRANSLATION:
           exercise = this._createMultipleChoiceExercise(verse);
           break;
-        case ExerciseType.LISTEN_AND_CHOOSE:
+        case ExerciseType.LISTEN_AND_SELECT:
           exercise = this._createListenExercise(verse);
           break;
         // Otros tipos de ejercicios se pueden añadir aquí
@@ -780,7 +789,166 @@ class GitaDataService {
     return this._shuffleArray(exercises);
   }
 
-  private _createListenExercise(verse: Verse): ListenExercise {
+  // ==================== NEW PRIORITY 1: SECTIONS & UNITS ====================
+
+  /**
+   * Obtiene todas las secciones con su progreso actual
+   */
+  async getSections(): Promise<Section[]> {
+    try {
+      const progress = await this.getStudyProgress();
+      const sectionsData = [...SECTIONS];
+
+      return sectionsData.map(section => {
+        const sectionProgress = this.calculateSectionProgress(section, progress);
+        return {
+          ...section,
+          progress: sectionProgress,
+          status: this.calculateSectionStatus(section, sectionProgress)
+        };
+      });
+    } catch (error) {
+      console.error('Error getting sections:', error);
+      return SECTIONS;
+    }
+  }
+
+  /**
+   * Obtiene las units de una sección específica
+   */
+  async getUnitsForSection(sectionId: string): Promise<NewUnit[]> {
+    try {
+      const progress = await this.getStudyProgress();
+      let units: NewUnit[] = [];
+
+      switch (sectionId) {
+        case 'foundations':
+          units = [...FOUNDATION_UNITS];
+          break;
+        case 'action':
+          units = [...ACTION_UNITS];
+          break;
+        // Añadir más secciones aquí según se vayan creando
+        default:
+          return [];
+      }
+
+      return units.map(unit => {
+        const completionPercentage = this.calculateUnitProgress(unit, progress);
+        return {
+          ...unit,
+          completionPercentage,
+          status: this.calculateUnitStatus(unit, completionPercentage)
+        };
+      });
+    } catch (error) {
+      console.error('Error getting units for section:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Crea un resumen de lección completo con gemas y achievements
+   */
+  async createLessonSummary(
+    correctAnswers: number,
+    totalAnswers: number,
+    isFirstTryPerfect: boolean = false
+  ): Promise<LessonSummary> {
+    try {
+      const gameState = await this.getGameState();
+      const currentStreak = gameState.streak;
+      
+      // Verificar si se completó una unidad
+      const isUnitComplete = await this.checkIfUnitCompleted(correctAnswers, totalAnswers);
+      
+      // Verificar achievements desbloqueados
+      const newAchievements = GemEarningService.checkForNewAchievements(
+        Math.round((correctAnswers / totalAnswers) * 100),
+        currentStreak,
+        gameState.xp,
+        isFirstTryPerfect
+      );
+
+      // Crear el resumen usando el servicio de gemas
+      return GemEarningService.createLessonSummary(
+        correctAnswers,
+        totalAnswers,
+        isFirstTryPerfect,
+        isUnitComplete,
+        currentStreak,
+        newAchievements
+      );
+    } catch (error) {
+      console.error('Error creating lesson summary:', error);
+      // Retornar resumen por defecto en caso de error
+      return {
+        xpGained: correctAnswers * 10,
+        gemsEarned: 10,
+        accuracy: Math.round((correctAnswers / totalAnswers) * 100),
+        perfectAnswers: correctAnswers,
+        totalAnswers,
+        streakDays: 1,
+        masteryStarsGained: correctAnswers === totalAnswers ? 5 : 3,
+        achievementsUnlocked: [],
+        motivationalMessage: '¡Buen trabajo! Sigue así.',
+      };
+    }
+  }
+
+  /**
+   * Actualiza el estado del juego después de completar una lección
+   */
+  async updateGameStateAfterLesson(lessonSummary: LessonSummary): Promise<void> {
+    try {
+      const currentState = await this.getGameState();
+      const updatedState = GemEarningService.updateGameStateWithRewards(currentState, lessonSummary);
+      await this.saveGameState(updatedState);
+    } catch (error) {
+      console.error('Error updating game state after lesson:', error);
+    }
+  }
+
+  // ==================== HELPER METHODS ====================
+
+  private calculateSectionProgress(section: Section, progress: StudyProgress[]): number {
+    const sectionVerses = this.verses.filter(v => section.chapters.includes(v.capitulo));
+    const completedVerses = sectionVerses.filter(v => 
+      progress.some(p => p.verseId === this.getVerseId(v) && p.reviewCount > 0)
+    );
+    
+    return sectionVerses.length > 0 ? Math.round((completedVerses.length / sectionVerses.length) * 100) : 0;
+  }
+
+  private calculateSectionStatus(section: Section, progress: number): 'locked' | 'unlocked' | 'completed' {
+    if (progress >= 100) return 'completed';
+    if (section.unlockRequirement === 'available_from_start') return 'unlocked';
+    // Aquí se añadiría la lógica para verificar requisitos de desbloqueo
+    return progress > 0 ? 'unlocked' : 'locked';
+  }
+
+  private calculateUnitProgress(unit: NewUnit, progress: StudyProgress[]): number {
+    const unitVerses = unit.verses;
+    const completedVerses = unitVerses.filter((verseId: string) => 
+      progress.some(p => p.verseId === verseId && p.reviewCount > 0)
+    );
+    
+    return unitVerses.length > 0 ? Math.round((completedVerses.length / unitVerses.length) * 100) : 0;
+  }
+
+  private calculateUnitStatus(unit: NewUnit, progress: number): 'locked' | 'unlocked' | 'completed' {
+    if (progress >= 100) return 'completed';
+    if (unit.unlockRequirement === 'available_from_start') return 'unlocked';
+    // Aquí se añadiría la lógica para verificar requisitos de desbloqueo
+    return progress > 0 ? 'unlocked' : 'locked';
+  }
+
+  private async checkIfUnitCompleted(correctAnswers: number, totalAnswers: number): Promise<boolean> {
+    // Determinar si se completó una unidad basado en el rendimiento
+    return correctAnswers === totalAnswers;
+  }
+
+  private _createListenExercise(verse: Verse): ListenAndSelectExercise {
     const options: MultipleChoiceOption[] = [];
     const correctOptionId = `verse-${verse.capitulo}-${verse.verso}`;
 
@@ -793,10 +961,14 @@ class GitaDataService {
       options.push({ id: `verse-${v.capitulo}-${v.verso}`, text: v.transliteracion });
     });
 
+    // Generar URL de audio (en implementación real, esto vendría de la base de datos)
+    const audioUrl = (verse as any).audioUrl || `https://gitalearn-audio.com/chapters/${verse.capitulo}/verse-${verse.verso}.mp3`;
+
     return {
       verse,
-      type: ExerciseType.LISTEN_AND_CHOOSE,
+      type: ExerciseType.LISTEN_AND_SELECT,
       question: 'Escucha el audio y elige la transliteración correcta',
+      audioUrl,
       options: this._shuffleArray(options),
       correctOptionId,
       isCorrect: null,
@@ -853,8 +1025,9 @@ class GitaDataService {
   private _getRandomExerciseType(verse: Verse): ExerciseType {
     const availableTypes: ExerciseType[] = [];
 
-    if ((verse as any).audioUrl) {
-      availableTypes.push(ExerciseType.LISTEN_AND_CHOOSE);
+    // Verificar si el verso tiene audio disponible
+    if ((verse as any).audioUrl || verse.capitulo <= 2) { // Por ahora, simular que los primeros 2 capítulos tienen audio
+      availableTypes.push(ExerciseType.LISTEN_AND_SELECT);
     }
     
     // Siempre añadir opción múltiple como opción por defecto

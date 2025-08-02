@@ -4,7 +4,8 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } fr
 import { Ionicons } from '@expo/vector-icons';
 import { gitaDataService } from '../services/GitaDataService';
 import { audioService } from '../services/AudioService';
-import { Exercise, GameState, Verse, ExerciseType, MultipleChoiceOption } from '../types';
+import { Exercise, GameState, Verse, ExerciseType, MultipleChoiceOption, LessonSummary } from '../types';
+import LessonCompletionScreen from '../components/LessonCompletionScreen';
 
 interface LessonScreenProps {
   route: {
@@ -19,16 +20,37 @@ interface LessonScreenProps {
 const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
   const { lessonId, chapterNumber } = route.params;
 
+  // Todos los useState deben ir primero
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
+  
+  // Estados para lesson completion
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [showCompletionScreen, setShowCompletionScreen] = useState(false);
+  const [lessonSummary, setLessonSummary] = useState<LessonSummary | null>(null);
 
+  // Luego los Hooks de react-native-reanimated
   const progress = useSharedValue(0);
   const selectedOptionScale = useSharedValue(1);
 
+  // Animated styles que se usan en el render
+  const animatedProgressStyle = useAnimatedStyle(() => {
+    return {
+      width: `${progress.value * 100}%`,
+    };
+  });
+
+  const selectedOptionAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: selectedOptionScale.value }],
+    };
+  });
+
+  // Finalmente los useEffect
   useEffect(() => {
     loadLessonData();
   }, [lessonId, chapterNumber]);
@@ -90,16 +112,31 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
     selectedOptionScale.value = withSpring(1.05, { damping: 2, stiffness: 300 });
   };
 
+  const handlePlayAudio = async (audioUrl: string) => {
+    try {
+      await audioService.playVerseAudio(audioUrl);
+    } catch (error) {
+      console.error("Error playing audio:", error);
+    }
+  };
+
   const handleCheckPress = () => {
     if (!selectedAnswerId) return;
 
     const currentExercise = exercises[currentExerciseIndex];
-    if (currentExercise.type !== ExerciseType.MULTIPLE_CHOICE_TRANSLATION) return;
+    
+    // Verificar que el ejercicio es de tipo que permite verificación
+    if (currentExercise.type !== ExerciseType.MULTIPLE_CHOICE_TRANSLATION && 
+        currentExercise.type !== ExerciseType.LISTEN_AND_SELECT) {
+      return;
+    }
 
     const correct = selectedAnswerId === currentExercise.correctOptionId;
     setIsAnswerCorrect(correct);
 
+    // Contar respuestas correctas
     if (correct) {
+      setCorrectAnswers(prev => prev + 1);
       audioService.playCorrectSound();
     } else {
       audioService.playIncorrectSound();
@@ -118,7 +155,7 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
     }
   };
 
-  const handleContinuePress = () => {
+  const handleContinuePress = async () => {
     setSelectedAnswerId(null);
     setIsAnswerCorrect(null);
     selectedOptionScale.value = 1;
@@ -126,9 +163,35 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
     if (currentExerciseIndex < exercises.length - 1) {
       setCurrentExerciseIndex(prev => prev + 1);
     } else {
-      // Lesson finished
+      // Lección terminada - mostrar pantalla de resumen
+      await showLessonCompletion();
+    }
+  };
+
+  const showLessonCompletion = async () => {
+    try {
+      // Crear resumen de la lección
+      const summary = await gitaDataService.createLessonSummary(
+        correctAnswers,
+        exercises.length,
+        correctAnswers === exercises.length // isFirstTryPerfect
+      );
+      
+      // Actualizar game state con rewards
+      await gitaDataService.updateGameStateAfterLesson(summary);
+      
+      setLessonSummary(summary);
+      setShowCompletionScreen(true);
+    } catch (error) {
+      console.error('Error creating lesson summary:', error);
+      // Fallback: volver directamente
       navigation.goBack();
     }
+  };
+
+  const handleCompletionContinue = () => {
+    setShowCompletionScreen(false);
+    navigation.goBack();
   };
 
   const renderExercise = () => {
@@ -160,16 +223,9 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
                 }
               }
 
-              const animatedStyle = useAnimatedStyle(() => {
-                return {
-                  transform: [{ scale: isSelected ? selectedOptionScale.value : 1 }],
-                };
-              });
-
               return (
-                <Animated.View style={animatedStyle}>
+                <Animated.View key={option.id} style={selectedAnswerId === option.id ? selectedOptionAnimatedStyle : undefined}>
                   <TouchableOpacity
-                    key={option.id}
                     style={buttonStyle}
                     onPress={() => handleAnswerPress(option.id)}
                     disabled={isAnswerCorrect !== null}
@@ -183,6 +239,58 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
         </View>
       );
     }
+
+    if (exercise.type === ExerciseType.LISTEN_AND_SELECT) {
+      return (
+        <View>
+          <Text style={styles.questionText}>{exercise.question}</Text>
+          
+          {/* Botón de reproducir audio */}
+          <TouchableOpacity 
+            style={styles.audioButton}
+            onPress={() => handlePlayAudio(exercise.audioUrl)}
+          >
+            <Ionicons name="play-circle" size={80} color="#58CC02" />
+            <Text style={styles.audioButtonText}>Reproducir Audio</Text>
+          </TouchableOpacity>
+
+          <View style={styles.optionsContainer}>
+            {exercise.options.map(option => {
+              const isSelected = selectedAnswerId === option.id;
+              let buttonStyle: any = [styles.optionButton];
+              let textStyle: any = [styles.optionText];
+
+              if (isSelected) {
+                buttonStyle.push(styles.selectedOptionButton);
+              }
+
+              if (isAnswerCorrect !== null) {
+                if (option.id === exercise.correctOptionId) {
+                  buttonStyle.push(styles.correctOptionButton);
+                  textStyle.push(styles.correctOptionText);
+                } else if (isSelected) {
+                  buttonStyle.push(styles.incorrectOptionButton);
+                  textStyle.push(styles.incorrectOptionText);
+                }
+              }
+
+              return (
+                <Animated.View key={option.id} style={selectedAnswerId === option.id ? selectedOptionAnimatedStyle : undefined}>
+                  <TouchableOpacity
+                    style={buttonStyle}
+                    onPress={() => handleAnswerPress(option.id)}
+                    disabled={isAnswerCorrect !== null}
+                  >
+                    <Text style={textStyle}>{option.text}</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            })}
+          </View>
+        </View>
+      );
+    }
+    
     return null;
   };
 
@@ -194,50 +302,55 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
     );
   }
 
-  const animatedProgressStyle = useAnimatedStyle(() => {
-    return {
-      width: `${progress.value * 100}%`,
-    };
-  });
-
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="close" size={28} color="#777" />
-        </TouchableOpacity>
-        <View style={styles.progressContainer}>
-            <Animated.View style={[styles.progressBar, animatedProgressStyle]} />
-        </View>
-        <View style={styles.heartsContainer}>
-            <Ionicons name="heart" size={24} color="#FF4B4B" />
-            <Text style={styles.heartsText}>{gameState.hearts}</Text>
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        {renderExercise()}
-      </View>
-
-      <View style={styles.footer}>
-        {isAnswerCorrect === null ? (
-          <TouchableOpacity 
-            style={[styles.checkButton, !selectedAnswerId && styles.disabledButton]} 
-            onPress={handleCheckPress}
-            disabled={!selectedAnswerId}
-          >
-            <Text style={styles.checkButtonText}>COMPROBAR</Text>
+    <>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="close" size={28} color="#777" />
           </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={[styles.checkButton, isAnswerCorrect ? styles.correctFooter : styles.incorrectFooter]} 
-            onPress={handleContinuePress}
-          >
-            <Text style={styles.checkButtonText}>CONTINUAR</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </SafeAreaView>
+          <View style={styles.progressContainer}>
+              <Animated.View style={[styles.progressBar, animatedProgressStyle]} />
+          </View>
+          <View style={styles.heartsContainer}>
+              <Ionicons name="heart" size={24} color="#FF4B4B" />
+              <Text style={styles.heartsText}>{gameState.hearts}</Text>
+          </View>
+        </View>
+
+        <View style={styles.content}>
+          {renderExercise()}
+        </View>
+
+        <View style={styles.footer}>
+          {isAnswerCorrect === null ? (
+            <TouchableOpacity 
+              style={[styles.checkButton, !selectedAnswerId && styles.disabledButton]} 
+              onPress={handleCheckPress}
+              disabled={!selectedAnswerId}
+            >
+              <Text style={styles.checkButtonText}>COMPROBAR</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              style={[styles.checkButton, isAnswerCorrect ? styles.correctFooter : styles.incorrectFooter]} 
+              onPress={handleContinuePress}
+            >
+              <Text style={styles.checkButtonText}>CONTINUAR</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </SafeAreaView>
+
+      {/* Pantalla de Finalización de Lección */}
+      {showCompletionScreen && lessonSummary && (
+        <LessonCompletionScreen
+          lessonSummary={lessonSummary}
+          onContinue={handleCompletionContinue}
+          visible={showCompletionScreen}
+        />
+      )}
+    </>
   );
 };
 
@@ -297,6 +410,18 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     // styles for options container
+  },
+  audioButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 30,
+    padding: 20,
+  },
+  audioButtonText: {
+    fontSize: 16,
+    color: '#58CC02',
+    fontWeight: 'bold',
+    marginTop: 10,
   },
   optionButton: {
     borderWidth: 2,
