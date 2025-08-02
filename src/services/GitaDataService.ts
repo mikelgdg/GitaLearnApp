@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   STUDY_SESSIONS: 'study_sessions',
   ACHIEVEMENTS: 'achievements',
   SETTINGS: 'app_settings',
+  FAVORITE_VERSES: 'favorite_verses',
 };
 
 class GitaDataService {
@@ -60,6 +61,52 @@ class GitaDataService {
    */
   getVerseId(verse: Verse): string {
     return `${verse.capitulo}-${verse.verso}`;
+  }
+
+  // ==================== FAVORITES ====================
+
+  async getFavoriteVerseIds(): Promise<string[]> {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.FAVORITE_VERSES);
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error('Error getting favorite verse IDs:', error);
+      return [];
+    }
+  }
+
+  async getFavoriteVerses(): Promise<Verse[]> {
+    const favoriteIds = await this.getFavoriteVerseIds();
+    return this.verses.filter(verse => favoriteIds.includes(this.getVerseId(verse)));
+  }
+
+  async addVerseToFavorites(verseId: string): Promise<void> {
+    try {
+      const favorites = await this.getFavoriteVerseIds();
+      if (!favorites.includes(verseId)) {
+        const updatedFavorites = [...favorites, verseId];
+        await AsyncStorage.setItem(STORAGE_KEYS.FAVORITE_VERSES, JSON.stringify(updatedFavorites));
+      }
+    } catch (error) {
+      console.error('Error adding verse to favorites:', error);
+    }
+  }
+
+  async removeVerseFromFavorites(verseId: string): Promise<void> {
+    try {
+      let favorites = await this.getFavoriteVerseIds();
+      if (favorites.includes(verseId)) {
+        favorites = favorites.filter(id => id !== verseId);
+        await AsyncStorage.setItem(STORAGE_KEYS.FAVORITE_VERSES, JSON.stringify(favorites));
+      }
+    } catch (error) {
+      console.error('Error removing verse from favorites:', error);
+    }
+  }
+
+  async isVerseFavorite(verseId: string): Promise<boolean> {
+    const favorites = await this.getFavoriteVerseIds();
+    return favorites.includes(verseId);
   }
   
   // ==================== STUDY PROGRESS ====================

@@ -12,6 +12,7 @@ import VerseDetailScreen from '../screens/VerseDetailScreen';
 import StudyScreen from '../screens/StudyScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import FavoritesScreen from '../screens/FavoritesScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -31,6 +32,9 @@ const getTabBarIcon = (routeName: string, focused: boolean) => {
       break;
     case 'Progress':
       iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+      break;
+    case 'Favorites':
+      iconName = focused ? 'heart' : 'heart-outline';
       break;
     case 'Settings':
       iconName = focused ? 'settings' : 'settings-outline';
@@ -87,6 +91,11 @@ function TabNavigator() {
         name="Progress" 
         component={ProgressScreen}
         options={{ tabBarLabel: 'Progreso' }}
+      />
+      <Tab.Screen 
+        name="Favorites" 
+        component={FavoritesScreen}
+        options={{ tabBarLabel: 'Favoritos' }}
       />
       <Tab.Screen 
         name="Settings" 

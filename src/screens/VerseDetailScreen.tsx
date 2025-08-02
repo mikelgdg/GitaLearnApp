@@ -41,19 +41,20 @@ export default function VerseDetailScreen({ navigation, route }: any) {
     try {
       // Cargar progreso del verso
       const progress = await gitaDataService.getStudyProgress();
-      const verseId = `${verse.capitulo}-${verse.verso}`;
+      const verseId = gitaDataService.getVerseId(verse);
       const verseProgress = progress.find(p => p.verseId === verseId);
       setStudyProgress(verseProgress || null);
 
-      // Cargar si está en favoritos (implementar cuando tengamos esa funcionalidad)
-      setIsFavorite(false);
+      // Cargar si está en favoritos
+      const isFav = await gitaDataService.isVerseFavorite(verseId);
+      setIsFavorite(isFav);
     } catch (error) {
       console.error('Error loading verse data:', error);
     }
   };
 
-  const loadChapterVerses = () => {
-    const chapterVerses = gitaDataService.getVersesByChapter(verse.capitulo);
+  const loadChapterVerses = async () => {
+    const chapterVerses = await gitaDataService.getVersesByChapter(verse.capitulo);
     setAllChapterVerses(chapterVerses);
     
     const currentIndex = chapterVerses.findIndex(
@@ -62,15 +63,17 @@ export default function VerseDetailScreen({ navigation, route }: any) {
     setCurrentVerseIndex(currentIndex);
   };
 
-  const handleFavoritePress = () => {
-    setIsFavorite(!isFavorite);
-    // Guardar en favoritos - implementación futura
-    Alert.alert(
-      isFavorite ? 'Eliminado de favoritos' : 'Añadido a favoritos',
-      isFavorite 
-        ? 'El verso ha sido eliminado de tus favoritos'
-        : 'El verso ha sido añadido a tus favoritos'
-    );
+  const handleFavoritePress = async () => {
+    const verseId = gitaDataService.getVerseId(verse);
+    if (isFavorite) {
+      await gitaDataService.removeVerseFromFavorites(verseId);
+      setIsFavorite(false);
+      Alert.alert('Eliminado de favoritos');
+    } else {
+      await gitaDataService.addVerseToFavorites(verseId);
+      setIsFavorite(true);
+      Alert.alert('Añadido a favoritos');
+    }
   };
 
   const handleAudioPress = () => {
