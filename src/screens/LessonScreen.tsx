@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { gitaDataService } from '../services/GitaDataService';
+import { audioService } from '../services/AudioService';
 import { Exercise, GameState, Verse, ExerciseType, MultipleChoiceOption } from '../types';
 
 interface LessonScreenProps {
@@ -86,6 +87,12 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
 
     const correct = selectedAnswerId === currentExercise.correctOptionId;
     setIsAnswerCorrect(correct);
+
+    if (correct) {
+      audioService.playCorrectSound();
+    } else {
+      audioService.playIncorrectSound();
+    }
 
     // Update game state
     if (gameState) {
