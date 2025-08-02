@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { gitaDataService } from '../services/GitaDataService';
 import { audioService } from '../services/AudioService';
@@ -25,9 +26,18 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
   const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
 
+  const progress = useSharedValue(0);
+  const selectedOptionScale = useSharedValue(1);
+
   useEffect(() => {
     loadLessonData();
   }, [lessonId, chapterNumber]);
+
+  useEffect(() => {
+    if (exercises.length > 0) {
+      progress.value = withTiming((currentExerciseIndex + 1) / exercises.length, { duration: 300 });
+    }
+  }, [currentExerciseIndex, exercises]);
 
   const loadLessonData = async () => {
     setIsLoading(true);
@@ -77,6 +87,7 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
   const handleAnswerPress = (optionId: string) => {
     if (isAnswerCorrect !== null) return; // Already answered
     setSelectedAnswerId(optionId);
+    selectedOptionScale.value = withSpring(1.05, { damping: 2, stiffness: 300 });
   };
 
   const handleCheckPress = () => {
@@ -110,6 +121,7 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
   const handleContinuePress = () => {
     setSelectedAnswerId(null);
     setIsAnswerCorrect(null);
+    selectedOptionScale.value = 1;
 
     if (currentExerciseIndex < exercises.length - 1) {
       setCurrentExerciseIndex(prev => prev + 1);
@@ -148,15 +160,23 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
                 }
               }
 
+              const animatedStyle = useAnimatedStyle(() => {
+                return {
+                  transform: [{ scale: isSelected ? selectedOptionScale.value : 1 }],
+                };
+              });
+
               return (
-                <TouchableOpacity
-                  key={option.id}
-                  style={buttonStyle}
-                  onPress={() => handleAnswerPress(option.id)}
-                  disabled={isAnswerCorrect !== null}
-                >
-                  <Text style={textStyle}>{option.text}</Text>
-                </TouchableOpacity>
+                <Animated.View style={animatedStyle}>
+                  <TouchableOpacity
+                    key={option.id}
+                    style={buttonStyle}
+                    onPress={() => handleAnswerPress(option.id)}
+                    disabled={isAnswerCorrect !== null}
+                  >
+                    <Text style={textStyle}>{option.text}</Text>
+                  </TouchableOpacity>
+                </Animated.View>
               );
             })}
           </View>
@@ -174,7 +194,11 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
     );
   }
 
-  const progress = (currentExerciseIndex + 1) / exercises.length;
+  const animatedProgressStyle = useAnimatedStyle(() => {
+    return {
+      width: `${progress.value * 100}%`,
+    };
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -183,7 +207,7 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
           <Ionicons name="close" size={28} color="#777" />
         </TouchableOpacity>
         <View style={styles.progressContainer}>
-            <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+            <Animated.View style={[styles.progressBar, animatedProgressStyle]} />
         </View>
         <View style={styles.heartsContainer}>
             <Ionicons name="heart" size={24} color="#FF4B4B" />
