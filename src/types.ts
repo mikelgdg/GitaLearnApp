@@ -233,3 +233,70 @@ export interface ListenAndSelectExercise extends BaseExercise {
 
 // A union type for all possible exercises
 export type Exercise = MultipleChoiceExercise | CompleteTheVerseExercise | ListenAndSelectExercise;
+
+// --- MAPA VISUAL TYPES ---
+
+export interface PathNode {
+  id: string;
+  type: 'lesson' | 'checkpoint' | 'section_header';
+  position: {
+    x: number;
+    y: number;
+  };
+  data: LessonPathData | CheckpointPathData | SectionHeaderData;
+  status: 'locked' | 'unlocked' | 'completed' | 'mastered';
+  connections: string[]; // IDs of connected nodes
+}
+
+export interface LessonPathData {
+  lessonId: string;
+  unitId: string;
+  sectionId: string;
+  title: string;
+  masteryLevel: number; // 0-5 stars
+  isBonus?: boolean;
+}
+
+export interface CheckpointPathData {
+  checkpointId: string;
+  unitId: string;
+  sectionId: string;
+  title: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  gemsReward: number;
+}
+
+export interface SectionHeaderData {
+  sectionId: string;
+  title: string;
+  description: string;
+  color: string;
+  icon: string;
+  progress: number; // 0-100
+}
+
+export interface LearningPathMap {
+  nodes: PathNode[];
+  currentNode: string; // ID of current/next lesson
+  sections: Section[];
+  totalProgress: number; // 0-100 overall progress
+}
+
+// --- ARJU MASCOT TYPES ---
+
+export type ArjuMood = 
+  | 'neutral'     // Estado base, escuchando
+  | 'happy'       // Respuesta correcta, celebración  
+  | 'encouraging' // Animando después de error
+  | 'wise'        // Explicando conceptos profundos
+  | 'meditative'  // Momentos de reflexión
+  | 'excited'     // Nuevo logro desbloqueado
+  | 'compassionate' // Consolando tras dificultades
+  | 'determined'  // Preparando para desafíos
+  | 'enlightened'; // Momentos de realización espiritual
+
+export interface ArjuState {
+  mood: ArjuMood;
+  message?: string;
+  animation?: 'bounce' | 'glow' | 'float' | 'pulse';
+}

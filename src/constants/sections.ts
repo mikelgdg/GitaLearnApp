@@ -1,5 +1,22 @@
 import { Section, NewUnit, GemEarning, ShopItem } from '../types';
 
+// ==================== ARJU COLORS ====================
+export const ARJU_COLORS = {
+  // Colores principales de Arju
+  PRIMARY_BLUE: '#4A90E2',      // Azul de la túnica de Arju
+  ACCENT_ORANGE: '#FF6B35',     // Naranja de detalles
+  BACKGROUND_SAGE: '#E8F4E6',   // Verde sage del fondo ¡PERFECTO!
+  
+  // Duolingo mantenemos para botones de acción
+  DUOLINGO_GREEN: '#58CC02',
+  DUOLINGO_BLUE: '#1CB0F6',
+  
+  // Neutrales actualizados
+  TEXT_DARK: '#2C3E50',
+  TEXT_LIGHT: '#7F8C8D',
+  CARD_WHITE: '#FEFEFE',
+};
+
 // ==================== SECCIONES DEL BHAGAVAD GITA ====================
 
 export const SECTIONS: Section[] = [

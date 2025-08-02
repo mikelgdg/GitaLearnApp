@@ -14,6 +14,7 @@ import ProgressScreen from '../screens/ProgressScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import LessonScreen from '../screens/LessonScreen'; // Importar la nueva pantalla
+import LearningPathMapScreen from '../screens/LearningPathMapScreen'; // Nuevo mapa visual
 import ShopScreen from '../screens/ShopScreen';
 import LeaderboardScreen from '../screens/LeaderboardScreen';
 
@@ -138,6 +139,7 @@ function AppStack() {
       <Stack.Screen name="ChapterDetail" component={ChapterDetailScreen as React.FC<any>} />
       <Stack.Screen name="VerseDetail" component={VerseDetailScreen} />
       <Stack.Screen name="Lesson" component={LessonScreen as React.FC<any>} />
+      <Stack.Screen name="LearningPath" component={LearningPathMapScreen as React.FC<any>} />
     </Stack.Navigator>
   );
 }

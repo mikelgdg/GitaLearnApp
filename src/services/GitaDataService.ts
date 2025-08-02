@@ -1040,6 +1040,119 @@ class GitaDataService {
     return availableTypes[randomIndex];
   }
 
+  // ==================== LEARNING PATH MAP ====================
+  
+  /**
+   * Genera el mapa visual de aprendizaje tipo Duolingo
+   */
+  async generateLearningPathMap(): Promise<any> {
+    try {
+      const sections = await this.getSections();
+      const gameState = await this.getGameState();
+      
+      const nodes: any[] = [];
+      let currentY = 0;
+      const NODE_SPACING = 100;
+      const SECTION_SPACING = 150;
+      
+      for (const section of sections) {
+        // Section Header Node
+        nodes.push({
+          id: `section-${section.id}`,
+          type: 'section_header',
+          position: { x: 0, y: currentY },
+          data: {
+            sectionId: section.id,
+            title: section.title,
+            description: section.description,
+            color: section.color,
+            icon: section.icon,
+            progress: section.progress,
+          },
+          status: section.status,
+          connections: [],
+        });
+        
+        currentY += SECTION_SPACING;
+        
+        // Get units for this section
+        const units = await this.getUnitsForSection(section.id);
+        
+        for (const unit of units) {
+          // Create lessons for this unit (simplified - 3 lessons per unit)
+          for (let i = 1; i <= 3; i++) {
+            const lessonId = `${unit.id}-lesson-${i}`;
+            
+            nodes.push({
+              id: lessonId,
+              type: 'lesson',
+              position: { x: 0, y: currentY },
+              data: {
+                lessonId,
+                unitId: unit.id,
+                sectionId: section.id,
+                title: `${i}`,
+                masteryLevel: Math.floor(Math.random() * 6), // 0-5 stars (mock)
+                isBonus: false,
+              },
+              status: unit.status === 'completed' ? 'completed' : 
+                     unit.status === 'unlocked' ? 'unlocked' : 'locked',
+              connections: [],
+            });
+            
+            currentY += NODE_SPACING;
+          }
+          
+          // Add checkpoint after unit
+          if (unit.checkpointRequired) {
+            nodes.push({
+              id: `checkpoint-${unit.id}`,
+              type: 'checkpoint',
+              position: { x: 0, y: currentY },
+              data: {
+                checkpointId: `checkpoint-${unit.id}`,
+                unitId: unit.id,
+                sectionId: section.id,
+                title: 'CHECKPOINT',
+                difficulty: 'medium' as const,
+                gemsReward: 100,
+              },
+              status: unit.status === 'completed' ? 'completed' : 
+                     unit.status === 'unlocked' ? 'unlocked' : 'locked',
+              connections: [],
+            });
+            
+            currentY += NODE_SPACING + 50;
+          }
+        }
+        
+        currentY += SECTION_SPACING;
+      }
+      
+      // Find current node (next unlocked lesson)
+      const currentNodeId = nodes.find(node => 
+        node.status === 'unlocked' && node.type === 'lesson'
+      )?.id || nodes[0]?.id;
+      
+      return {
+        nodes,
+        currentNode: currentNodeId,
+        sections,
+        totalProgress: Math.round((sections.reduce((sum, s) => sum + s.progress, 0) / sections.length)),
+      };
+      
+    } catch (error) {
+      console.error('Error generating learning path map:', error);
+      // Return minimal map as fallback
+      return {
+        nodes: [],
+        currentNode: '',
+        sections: [],
+        totalProgress: 0,
+      };
+    }
+  }
+
   // --- AsyncStorage Management ---
   async _clearAllData() {
     try {

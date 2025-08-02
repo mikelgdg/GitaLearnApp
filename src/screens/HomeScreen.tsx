@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   RefreshControl,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { gitaDataService } from '../services/GitaDataService';
@@ -90,6 +91,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <Text style={styles.statText}>{gameState?.hearts || 0}</Text>
         </View>
       </View>
+      
+      {/* Botón para acceder al mapa visual */}
+      <TouchableOpacity
+        style={styles.mapButton}
+        onPress={() => navigation.navigate('LearningPath')}
+      >
+        <Ionicons name="map" size={24} color="white" />
+        <Text style={styles.mapButtonText}>Ver Mapa de Aprendizaje</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -162,6 +172,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 8,
     color: '#333',
+  },
+  mapButton: {
+    backgroundColor: '#1CB0F6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginHorizontal: 20,
+    marginTop: 15,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  mapButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
   },
   scrollView: {
     flex: 1,
