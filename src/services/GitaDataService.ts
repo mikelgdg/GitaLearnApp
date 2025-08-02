@@ -58,7 +58,7 @@ class GitaDataService {
   /**
    * Genera ID único para un verso
    */
-  private getVerseId(verse: Verse): string {
+  getVerseId(verse: Verse): string {
     return `${verse.capitulo}-${verse.verso}`;
   }
   
