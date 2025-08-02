@@ -85,9 +85,12 @@ export default function VerseDetailScreen({ navigation, route }: any) {
   };
 
   const handleStudyPress = () => {
-    navigation.navigate('Study', { 
-      mode: 'srs',
-      initialVerse: verse 
+    navigation.navigate('MainTabs', {
+      screen: 'Study',
+      params: {
+        mode: 'srs',
+        initialVerse: verse,
+      },
     });
   };
 

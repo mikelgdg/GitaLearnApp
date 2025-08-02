@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Verse, StudyProgress, StudySession, UserStats, Achievement, Chapter } from '../types';
+import { Verse, StudyProgress, StudySession, UserStats, Achievement, Chapter, AppSettings } from '../types';
 import versesData from '../../assets/data/verses.json';
 
 // Constantes para almacenamiento local
@@ -484,6 +484,49 @@ class GitaDataService {
       chapters.push(await this.getChapter(i));
     }
     return chapters;
+  }
+
+  // ==================== APP SETTINGS ====================
+
+  async getAppSettings(): Promise<AppSettings> {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
+      if (data) {
+        return JSON.parse(data);
+      }
+      // Ajustes por defecto
+      return {
+        versesPerSession: 20,
+        dailyReminder: false,
+        theme: 'light',
+      };
+    } catch (error) {
+      console.error('Error getting app settings:', error);
+      return {
+        versesPerSession: 20,
+        dailyReminder: false,
+        theme: 'light',
+      };
+    }
+  }
+
+  async saveAppSettings(settings: AppSettings): Promise<void> {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    } catch (error) {
+      console.error('Error saving app settings:', error);
+    }
+  }
+
+  // ==================== DATA MANAGEMENT ====================
+
+  async clearAllData(): Promise<void> {
+    try {
+      const keys = Object.values(STORAGE_KEYS);
+      await AsyncStorage.multiRemove(keys);
+    } catch (error) {
+      console.error('Error clearing all data:', error);
+    }
   }
 }
 
