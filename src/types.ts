@@ -51,7 +51,6 @@ export interface Chapter {
 }
 
 export interface AppSettings {
-  versesPerSession: 10 | 20 | 30;
   dailyReminder: boolean;
   theme: 'light' | 'dark';
 }
@@ -63,6 +62,7 @@ export interface Lesson {
   chapterNumber: number;
   lessonNumber: number;
   title: string;
+  verses: Verse[];
   totalVerses: number;
   status: 'locked' | 'unlocked' | 'completed';
   masteryLevel: number; // 0-5 stars
@@ -91,3 +91,37 @@ export interface GameState {
   lastSessionDate: string | null; // ISO string
   streakFreezeActive: boolean;
 }
+
+// --- Exercise Types ---
+
+export enum ExerciseType {
+  MULTIPLE_CHOICE_TRANSLATION = 'MULTIPLE_CHOICE_TRANSLATION',
+  COMPLETE_THE_VERSE = 'COMPLETE_THE_VERSE',
+  MATCH_THE_WORDS = 'MATCH_THE_WORDS',
+}
+
+export interface MultipleChoiceOption {
+  id: string;
+  text: string;
+}
+
+export interface BaseExercise {
+  verse: Verse;
+  isCorrect: boolean | null; // null when not answered yet
+}
+
+export interface MultipleChoiceExercise extends BaseExercise {
+  type: ExerciseType.MULTIPLE_CHOICE_TRANSLATION;
+  question: string; // e.g., "What is the meaning of this verse?"
+  options: MultipleChoiceOption[];
+  correctOptionId: string;
+}
+
+export interface CompleteTheVerseExercise extends BaseExercise {
+  type: ExerciseType.COMPLETE_THE_VERSE;
+  question: string; // The verse with a blank
+  answer: string; // The word that fills the blank
+}
+
+// A union type for all possible exercises
+export type Exercise = MultipleChoiceExercise | CompleteTheVerseExercise;

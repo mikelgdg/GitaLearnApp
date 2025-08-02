@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Verse, StudyProgress, StudySession, UserStats, Achievement, Chapter, AppSettings, LearningPath, Lesson, GameState } from '../types';
+import { Verse, StudyProgress, StudySession, UserStats, Achievement, Chapter, AppSettings, LearningPath, Lesson, GameState, Unit } from '../types';
 import versesData from '../../assets/data/verses.json';
 
 // Constantes para almacenamiento local
@@ -61,6 +61,21 @@ class GitaDataService {
    */
   getVerseId(verse: Verse): string {
     return `${verse.capitulo}-${verse.verso}`;
+  }
+
+  async getLesson(chapterNumber: number, lessonId: string): Promise<Lesson | null> {
+    const learningPath = await this.getLearningPath();
+    const unit = learningPath.units.find((u: Unit) => u.chapterNumber === chapterNumber);
+    if (!unit) {
+      console.error(`Unit with chapter number ${chapterNumber} not found.`);
+      return null;
+    }
+    const lesson = unit.lessons.find((l: Lesson) => l.id === lessonId);
+    if (!lesson) {
+      console.error(`Lesson with id ${lessonId} in chapter ${chapterNumber} not found.`);
+      return null;
+    }
+    return lesson;
   }
 
   /**
@@ -565,6 +580,7 @@ class GitaDataService {
           chapterNumber: chapter.number,
           lessonNumber,
           title: `Lección ${lessonNumber}`,
+          verses: lessonVerses,
           totalVerses: lessonVerses.length,
           status,
           masteryLevel,
@@ -624,14 +640,12 @@ class GitaDataService {
       }
       // Ajustes por defecto
       return {
-        versesPerSession: 20,
         dailyReminder: false,
         theme: 'light',
       };
     } catch (error) {
       console.error('Error getting app settings:', error);
       return {
-        versesPerSession: 20,
         dailyReminder: false,
         theme: 'light',
       };
