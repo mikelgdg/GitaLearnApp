@@ -14,6 +14,7 @@ import ProgressScreen from '../screens/ProgressScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import LessonScreen from '../screens/LessonScreen'; // Importar la nueva pantalla
+import ShopScreen from '../screens/ShopScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -36,6 +37,9 @@ const getTabBarIcon = (routeName: string, focused: boolean): keyof typeof Ionico
       break;
     case 'Favorites':
       iconName = focused ? 'heart' : 'heart-outline';
+      break;
+    case 'Shop':
+      iconName = focused ? 'cart' : 'cart-outline';
       break;
     case 'Settings':
       iconName = focused ? 'settings' : 'settings-outline';
@@ -98,6 +102,11 @@ function TabNavigator() {
         component={FavoritesScreen}
         options={{ tabBarLabel: 'Favoritos' }}
       />
+      <Tab.Screen
+        name="Shop"
+        component={ShopScreen}
+        options={{ tabBarLabel: 'Tienda' }}
+      />
       <Tab.Screen 
         name="Settings" 
         component={SettingsScreen}
@@ -112,9 +121,9 @@ function AppStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={TabNavigator} />
-      <Stack.Screen name="ChapterDetail" component={ChapterDetailScreen as React.FC} />
+      <Stack.Screen name="ChapterDetail" component={ChapterDetailScreen as React.FC<any>} />
       <Stack.Screen name="VerseDetail" component={VerseDetailScreen} />
-      <Stack.Screen name="Lesson" component={LessonScreen as React.FC} />
+      <Stack.Screen name="Lesson" component={LessonScreen as React.FC<any>} />
     </Stack.Navigator>
   );
 }
