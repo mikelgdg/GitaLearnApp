@@ -13,7 +13,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import { gitaDataService } from '../services/GitaDataService';
 import { LearningPath, Lesson, GameState } from '../types';
 import UnitSection from '../components/learning-path/UnitSection';
+import DuolingoTopBar from '../components/DuolingoTopBar';
+import WeeklyGoalWidget from '../components/WeeklyGoalWidget';
+import HeartService from '../services/HeartService';
+import { audioService } from '../services/AudioService';
 import { Ionicons } from '@expo/vector-icons';
+import { AnimatedButton } from '../components/AnimatedButton';
+import { NeomorphicCard } from '../components/NeomorphicCard';
+import { FloatingBubbles, StarParticles } from '../components/ParticleEffects';
 
 interface HomeScreenProps {
   readonly navigation?: any;
@@ -28,9 +35,10 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const loadHomeData = async () => {
     try {
       setIsLoading(true);
+      // ✅ Usar HeartService para obtener GameState con hearts correctos
       const [path, state] = await Promise.all([
         gitaDataService.getLearningPath(),
-        gitaDataService.getGameState(),
+        HeartService.loadGameState(), // Usar HeartService en lugar de gitaDataService
       ]);
       setLearningPath(path);
       setGameState(state);
@@ -40,6 +48,11 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGameStateUpdate = (newState: GameState) => {
+    setGameState(newState);
+    HeartService.saveGameState(newState);
   };
 
   useFocusEffect(
@@ -77,29 +90,19 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      <View style={styles.statBar}>
-        <View style={styles.statItem}>
-          <Ionicons name="flame" size={24} color="#FF6B6B" />
-          <Text style={styles.statText}>{gameState?.streak || 0}</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Ionicons name="diamond" size={24} color="#2196F3" />
-          <Text style={styles.statText}>{gameState?.gems || 0}</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Ionicons name="heart" size={24} color="#FF6B6B" />
-          <Text style={styles.statText}>{gameState?.hearts || 0}</Text>
-        </View>
-      </View>
-      
-      {/* Botón para acceder al mapa visual */}
-      <TouchableOpacity
+      {/* ✨ Botón animado para acceder al mapa visual */}
+      <AnimatedButton
+        title="Ver Mapa de Aprendizaje"
+        onPress={() => {
+          audioService.playBubbleTap();
+          navigation.navigate('LearningPath');
+        }}
+        variant="primary"
+        size="large"
+        icon={<Ionicons name="map" size={24} color="white" />}
+        glowing={true}
         style={styles.mapButton}
-        onPress={() => navigation.navigate('LearningPath')}
-      >
-        <Ionicons name="map" size={24} color="white" />
-        <Text style={styles.mapButtonText}>Ver Mapa de Aprendizaje</Text>
-      </TouchableOpacity>
+      />
     </View>
   );
 
@@ -115,6 +118,38 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* ✨ Espacio extra para cámara frontal integrada */}
+      <View style={styles.notchSafeArea} />
+      
+      {/* 🫧 Partículas de fondo */}
+      <FloatingBubbles 
+        bubbleCount={4} 
+        colors={['rgba(74, 144, 226, 0.08)', 'rgba(255, 107, 53, 0.08)']}
+        speed={20000}
+      />
+      <StarParticles starCount={8} twinkleSpeed={4000} />
+      
+      {/* ✨ TopBar Duolingo con Hearts, Gems, Streak, XP */}
+      {gameState && (
+        <DuolingoTopBar 
+          gameState={gameState}
+          onGameStateUpdate={handleGameStateUpdate}
+          onHeartPress={() => Alert.alert('Hearts', 'Shop de hearts próximamente!')}
+          onGemPress={() => Alert.alert('Gems', 'Shop de gems próximamente!')}
+          onStreakPress={() => Alert.alert('Streak', `¡${gameState.streak} días seguidos! 🔥`)}
+        />
+      )}
+
+      {/* ✨ Weekly Goal Widget */}
+      {gameState && (
+        <WeeklyGoalWidget
+          currentXP={gameState.xp}
+          weeklyGoal={300} // Meta semanal de 300 XP
+          streakDays={gameState.streak}
+          onPress={() => Alert.alert('Meta Semanal', '¡Sigue practicando para alcanzar tu meta!')}
+        />
+      )}
+      
       {renderHeader()}
       <ScrollView
         style={styles.scrollView}
@@ -140,6 +175,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f0f4f8',
+  },
+  // ✨ Espacio para cámara frontal integrada
+  notchSafeArea: {
+    height: 20, // Espacio extra para la cámara frontal
+    backgroundColor: 'white',
   },
   loadingContainer: {
     flex: 1,

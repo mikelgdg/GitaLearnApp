@@ -177,10 +177,13 @@ export interface ShopItem {
 export interface GameState {
   xp: number;
   gems: number;
-  hearts: number;
+  hearts: number; // Max 5, starts at 5
+  maxHearts: number; // Always 5
   streak: number;
   lastCompletedDate: string | null;
   heartsLastRefill: string | null;
+  heartRefillTimeMinutes: number; // 30 minutes per heart
+  lastHeartLoss: string | null; // When last heart was lost
 }
 
 export interface LeaderboardEntry {

@@ -1,22 +1,24 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createStackNavigator } from '@react-navigation/stack';
+import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import HomeScreen from '../screens/HomeScreen';
 import ChaptersScreen from '../screens/ChaptersScreen';
 import ChapterDetailScreen from '../screens/ChapterDetailScreen';
 import VerseDetailScreen from '../screens/VerseDetailScreen';
-
 import StudyScreen from '../screens/StudyScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
-import LessonScreen from '../screens/LessonScreen'; // Importar la nueva pantalla
-import LearningPathMapScreen from '../screens/LearningPathMapScreen'; // Nuevo mapa visual
+import LessonScreen from '../screens/LessonScreen';
+import LearningPathMapScreen from '../screens/LearningPathMapScreen';
 import ShopScreen from '../screens/ShopScreen';
 import LeaderboardScreen from '../screens/LeaderboardScreen';
+
+// ✨ Importar custom tab bar
+import DuolingoTabBar from '../components/DuolingoTabBar';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -56,90 +58,85 @@ const getTabBarIcon = (routeName: string, focused: boolean): keyof typeof Ionico
   return iconName;
 };
 
-// Navegador de tabs
+// ✨ Navegador de tabs con DuolingoTabBar
 function TabNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          const iconName = getTabBarIcon(route.name, focused);
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: '#FF9933',
-        tabBarInactiveTintColor: 'gray',
-        tabBarStyle: {
-          backgroundColor: 'white',
-          borderTopWidth: 1,
-          borderTopColor: '#E0E0E0',
-          height: 90,
-          paddingBottom: 20,
-          paddingTop: 10,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '500',
-        },
+      tabBar={(props) => <DuolingoTabBar {...props} />}
+      screenOptions={{
         headerShown: false,
-      })}
+      }}
     >
       <Tab.Screen 
-        name="Home" 
+        name="Learn" 
         component={HomeScreen}
-        options={{ tabBarLabel: 'Inicio' }}
+        options={{ tabBarLabel: 'APRENDER' }}
       />
       <Tab.Screen 
-        name="Chapters" 
+        name="Lessons" 
         component={ChaptersScreen}
-        options={{ tabBarLabel: 'Capítulos' }}
+        options={{ tabBarLabel: 'LECCIONES' }}
       />
       <Tab.Screen 
-        name="Study" 
-        component={StudyScreen as React.FC<any>}
-        options={{ tabBarLabel: 'Estudiar' }}
-      />
-      <Tab.Screen 
-        name="Progress" 
-        component={ProgressScreen}
-        options={{ tabBarLabel: 'Progreso' }}
-      />
-      <Tab.Screen 
-        name="Favorites" 
-        component={FavoritesScreen}
-        options={{ tabBarLabel: 'Favoritos' }}
-      />
-      <Tab.Screen
-        name="Shop"
-        component={ShopScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cart" color={color} size={size} />
-          ),
-          headerShown: false,
-        }}
-      />
-      <Tab.Screen
-        name="Leaderboard"
+        name="Leaderboard" 
         component={LeaderboardScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="trophy" color={color} size={size} />
-          ),
-          headerShown: false,
-        }}
+        options={{ tabBarLabel: 'LIGAS' }}
+      />
+      <Tab.Screen 
+        name="Quests" 
+        component={StudyScreen as React.FC<any>}
+        options={{ tabBarLabel: 'MISIONES' }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={SettingsScreen}
+        options={{ tabBarLabel: 'PERFIL' }}
       />
     </Tab.Navigator>
   );
 }
 
-// Navegador principal con Stack
+// Navegador principal con Stack y transiciones laterales smooth
 function AppStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator 
+      screenOptions={{ 
+        headerShown: false,
+        // ✨ Transiciones laterales smooth como Duolingo
+        ...TransitionPresets.SlideFromRightIOS,
+        gestureEnabled: true,
+        gestureDirection: 'horizontal',
+      }}
+    >
       <Stack.Screen name="MainTabs" component={TabNavigator} />
-      <Stack.Screen name="ChapterDetail" component={ChapterDetailScreen as React.FC<any>} />
-      <Stack.Screen name="VerseDetail" component={VerseDetailScreen} />
-      <Stack.Screen name="Lesson" component={LessonScreen as React.FC<any>} />
-      <Stack.Screen name="LearningPath" component={LearningPathMapScreen as React.FC<any>} />
+      <Stack.Screen 
+        name="ChapterDetail" 
+        component={ChapterDetailScreen as React.FC<any>}
+        options={{
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
+      <Stack.Screen 
+        name="VerseDetail" 
+        component={VerseDetailScreen}
+        options={{
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
+      <Stack.Screen 
+        name="Lesson" 
+        component={LessonScreen as React.FC<any>}
+        options={{
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
+      <Stack.Screen 
+        name="LearningPath" 
+        component={LearningPathMapScreen as React.FC<any>}
+        options={{
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
     </Stack.Navigator>
   );
 }

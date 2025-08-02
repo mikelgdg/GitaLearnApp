@@ -8,6 +8,7 @@ class AudioService {
   private correctSound: Audio.Sound | null = null;
   private incorrectSound: Audio.Sound | null = null;
   private verseAudioCache: SoundCache = {};
+  private isAudioEnabled: boolean = true;
 
   constructor() {
     this.loadSounds();
@@ -37,12 +38,14 @@ class AudioService {
   }
 
   async playCorrectSound() {
+    if (!this.isAudioEnabled) return;
+    
     try {
       if (this.correctSound) {
         await this.correctSound.replayAsync();
       } else {
         // Sonido sintético de prueba para "correcto"
-        console.log("🎵 CORRECT SOUND: Ding!");
+        console.log("🎵 CORRECT SOUND: Ding! ✅");
       }
     } catch (error) {
       console.error("Error playing correct sound", error);
@@ -50,16 +53,54 @@ class AudioService {
   }
 
   async playIncorrectSound() {
+    if (!this.isAudioEnabled) return;
+    
     try {
       if (this.incorrectSound) {
         await this.incorrectSound.replayAsync();
       } else {
         // Sonido sintético de prueba para "incorrecto"
-        console.log("🎵 INCORRECT SOUND: Buzz!");
+        console.log("🎵 INCORRECT SOUND: Buzz! ❌");
       }
     } catch (error) {
       console.error("Error playing incorrect sound", error);
     }
+  }
+
+  // ✨ Nuevos sonidos tipo Duolingo
+  async playBubbleTap() {
+    if (!this.isAudioEnabled) return;
+    console.log("🎵 BUBBLE TAP: Pop! 🫧");
+  }
+
+  async playLessonComplete() {
+    if (!this.isAudioEnabled) return;
+    console.log("🎵 LESSON COMPLETE: Ta-da! 🎉");
+  }
+
+  async playHeartLoss() {
+    if (!this.isAudioEnabled) return;
+    console.log("🎵 HEART LOSS: Oh no! 💔");
+  }
+
+  async playGemEarned() {
+    if (!this.isAudioEnabled) return;
+    console.log("🎵 GEM EARNED: Cha-ching! 💎");
+  }
+
+  async playStreakAchieved() {
+    if (!this.isAudioEnabled) return;
+    console.log("🎵 STREAK: Fire! 🔥");
+  }
+
+  async playLevelUp() {
+    if (!this.isAudioEnabled) return;
+    console.log("🎵 LEVEL UP: Fanfare! 🎺");
+  }
+
+  async playCheckpointUnlocked() {
+    if (!this.isAudioEnabled) return;
+    console.log("🎵 CHECKPOINT UNLOCKED: Victory! 🏆");
   }
 
   async playVerseAudio(audioUrl: string): Promise<void> {
@@ -107,6 +148,21 @@ class AudioService {
     } catch (error) {
       console.error("Error unloading sounds", error);
     }
+  }
+
+  // ✨ Control de audio
+  enableAudio() {
+    this.isAudioEnabled = true;
+    console.log("🔊 Audio enabled");
+  }
+
+  disableAudio() {
+    this.isAudioEnabled = false;
+    console.log("🔇 Audio disabled");
+  }
+
+  isEnabled(): boolean {
+    return this.isAudioEnabled;
   }
 }
 

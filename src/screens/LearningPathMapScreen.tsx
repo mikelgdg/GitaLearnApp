@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,32 +6,33 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  SafeAreaView,
   Animated,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ARJU_COLORS } from '../constants/sections';
+import DuolingoTopBar from '../components/DuolingoTopBar';
+import { HeartService } from '../services/HeartService';
+import { GameState } from '../types';
+import { audioService } from '../services/AudioService';
+import { NeomorphicCard } from '../components/NeomorphicCard';
+import { FloatingBubbles, StarParticles, ConfettiExplosion } from '../components/ParticleEffects';
+import { AnimationUtils } from '../utils/animations';
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { ARJU_COLORS } from '../constants/sections';
 import { gitaDataService } from '../services/GitaDataService';
-
-interface LearningPathMapScreenProps {
-  navigation: any;
-}
-
-interface PathNode {
-  id: string;
-  type: 'lesson' | 'checkpoint' | 'section_header';
-  position: { x: number; y: number };
-  data: any;
-  status: 'locked' | 'unlocked' | 'completed' | 'mastered';
-  connections: string[];
-}
-
-interface LearningPathMap {
-  nodes: PathNode[];
-  currentNode: string;
-  sections: any[];
-  totalProgress: number;
-}
+import { audioService } from '../services/AudioService';
+import { 
+  PathNode, 
+  LearningPathMap, 
+  LessonPathData, 
+  CheckpointPathData, 
+  SectionHeaderData 
+} from '../types';
 
 interface LearningPathMapScreenProps {
   navigation: any;
@@ -43,10 +44,42 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
   const [pathMap, setPathMap] = useState<LearningPathMap | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [scrollY] = useState(new Animated.Value(0));
+  // ✨ Estados para animaciones y efectos
+  const [bubbleAnimations] = useState(new Map<string, Animated.Value>());
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [gameState, setGameState] = useState<GameState | null>(null);
 
   useEffect(() => {
     loadPathMap();
   }, []);
+
+  // ✨ Inicializar animaciones para burbujas desbloqueadas
+  useEffect(() => {
+    if (pathMap) {
+      pathMap.nodes.forEach(node => {
+        if ((node.status === 'unlocked' || node.status === 'completed') && !bubbleAnimations.has(node.id)) {
+          const animValue = new Animated.Value(1);
+          bubbleAnimations.set(node.id, animValue);
+          
+          // Animación bounce continua
+          const bounceAnimation = Animated.sequence([
+            Animated.timing(animValue, {
+              toValue: 1.05,
+              duration: 2000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(animValue, {
+              toValue: 1,
+              duration: 2000,
+              useNativeDriver: true,
+            }),
+          ]);
+          
+          Animated.loop(bounceAnimation).start();
+        }
+      });
+    }
+  }, [pathMap]);
 
   const loadPathMap = async () => {
     setIsLoading(true);
@@ -62,21 +95,34 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
   };
 
   const handleNodePress = (node: PathNode) => {
-    if (node.status === 'locked') return;
+    if (node.status === 'locked') {
+      // ✨ Sonido para nodo bloqueado
+      audioService.playIncorrectSound();
+      return;
+    }
+
+    // ✨ Sonido de tap en burbuja
+    audioService.playBubbleTap();
 
     switch (node.type) {
-      case 'lesson':
+      case 'lesson': {
+        const lessonData = node.data as LessonPathData;
         navigation.navigate('LessonScreen', {
-          lessonId: node.data.lessonId,
-          unitId: node.data.unitId,
+          lessonId: lessonData.lessonId,
+          unitId: lessonData.unitId,
         });
         break;
-      case 'checkpoint':
+      }
+      case 'checkpoint': {
+        const checkpointData = node.data as CheckpointPathData;
+        // ✨ Sonido especial para checkpoint
+        audioService.playCheckpointUnlocked();
         navigation.navigate('CheckpointScreen', {
-          checkpointId: node.data.checkpointId,
-          unitId: node.data.unitId,
+          checkpointId: checkpointData.checkpointId,
+          unitId: checkpointData.unitId,
         });
         break;
+      }
       case 'section_header':
         // Maybe show section info modal
         break;
@@ -100,7 +146,7 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
   };
 
   const renderSectionHeader = (node: PathNode, xPosition: number) => {
-    const data = node.data as any; // SectionHeaderData
+    const data = node.data as SectionHeaderData;
     
     return (
       <View
@@ -119,7 +165,7 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
           style={styles.sectionHeaderGradient}
         >
           <View style={styles.sectionHeaderContent}>
-            <Ionicons name={data.icon} size={32} color={data.color} />
+            <Ionicons name={data.icon as any} size={32} color={data.color} />
             <View style={styles.sectionHeaderText}>
               <Text style={[styles.sectionTitle, { color: data.color }]}>
                 {data.title}
@@ -146,75 +192,99 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
     );
   };
 
-  const renderLessonBubble = (node: PathNode, xPosition: number) => {
-    const data = node.data as any; // LessonPathData
-    const bubbleSize = 70;
+    const renderLessonBubble = (node: PathNode, xPosition: number) => {
+    const data = node.data as LessonPathData;
+    const bubbleSize = node.status === 'completed' ? 70 : 60;
     
+    // ✨ Obtener animación de bounce para esta burbuja
+    const bounceAnim = bubbleAnimations.get(node.id) || new Animated.Value(1);
+
     const getBubbleStyle = () => {
+      const baseStyle = {
+        ...styles.lessonBubble,
+        borderRadius: bubbleSize / 2,
+      };
+
       switch (node.status) {
         case 'locked':
-          return styles.bubbleLocked;
+          return { ...baseStyle, backgroundColor: ARJU_COLORS.TEXT_LIGHT };
         case 'unlocked':
-          return styles.bubbleUnlocked;
+          return { ...baseStyle, backgroundColor: ARJU_COLORS.PRIMARY_BLUE };
         case 'completed':
-          return styles.bubbleCompleted;
+          return { ...baseStyle, backgroundColor: ARJU_COLORS.ACCENT_ORANGE };
         case 'mastered':
-          return styles.bubbleMastered;
+          return { ...baseStyle, backgroundColor: '#FFD700' };
         default:
-          return styles.bubbleLocked;
+          return { ...baseStyle, backgroundColor: ARJU_COLORS.TEXT_LIGHT };
       }
     };
 
     const getBubbleIcon = () => {
-      if (node.status === 'locked') return 'lock-closed';
-      if (data.isBonus) return 'diamond';
-      return 'book';
+      if (data.isBonus) return 'star';
+      return node.status === 'mastered' ? 'trophy' : 'book';
     };
 
     return (
-      <TouchableOpacity
+      <Animated.View
         key={node.id}
-        style={[
-          styles.lessonBubble,
-          getBubbleStyle(),
-          {
-            left: xPosition - bubbleSize / 2,
-            top: node.position.y,
+        style={{
+          position: 'absolute',
+          left: xPosition - bubbleSize / 2,
+          top: node.position.y,
+          transform: [{ scale: bounceAnim }], // ✨ Aplicar animación bounce
+        }}
+      >
+        <NeomorphicCard
+          variant={node.status === 'locked' ? 'flat' : 'elevated'}
+          intensity={node.status === 'completed' ? 'strong' : 'medium'}
+          borderRadius={bubbleSize / 2}
+          style={{
             width: bubbleSize,
             height: bubbleSize,
-          }
-        ]}
-        onPress={() => handleNodePress(node)}
-        disabled={node.status === 'locked'}
-      >
-        <Ionicons 
-          name={getBubbleIcon()} 
-          size={24} 
-          color={node.status === 'locked' ? ARJU_COLORS.TEXT_LIGHT : 'white'} 
-        />
-        
-        {/* Mastery Stars */}
-        {data.masteryLevel > 0 && node.status !== 'locked' && (
-          <View style={styles.masteryStars}>
-            {[...Array(data.masteryLevel)].map((_, i) => (
-              <Ionicons key={i} name="star" size={8} color="#FFD700" />
-            ))}
-          </View>
-        )}
+          }}
+        >
+          <TouchableOpacity
+            style={[
+              getBubbleStyle(),
+              {
+                width: bubbleSize,
+                height: bubbleSize,
+                backgroundColor: 'transparent', // La card ya tiene el fondo
+              }
+            ]}
+            onPress={() => handleNodePress(node)}
+            disabled={node.status === 'locked'}
+          >
+          <Ionicons 
+            name={getBubbleIcon()} 
+            size={24} 
+            color={node.status === 'locked' ? ARJU_COLORS.TEXT_LIGHT : 'white'} 
+          />
+          
+          {/* Mastery Stars */}
+          {data.masteryLevel > 0 && node.status !== 'locked' && (
+            <View style={styles.masteryStars}>
+              {[...Array(data.masteryLevel)].map((_, i) => (
+                <Ionicons key={`star-${i}-${data.lessonId}`} name="star" size={8} color="#FFD700" />
+              ))}
+            </View>
+          )}
 
-        {/* Lesson Number */}
-        <Text style={[
-          styles.lessonNumber,
-          { color: node.status === 'locked' ? ARJU_COLORS.TEXT_LIGHT : 'white' }
-        ]}>
-          {data.title}
-        </Text>
-      </TouchableOpacity>
+          {/* Lesson Number */}
+          <Text style={[
+            styles.lessonNumber,
+            { color: node.status === 'locked' ? ARJU_COLORS.TEXT_LIGHT : 'white' }
+          ]}>
+            {data.title}
+          </Text>
+          </TouchableOpacity>
+        </NeomorphicCard>
+      </Animated.View>
     );
   };
 
   const renderCheckpointBubble = (node: PathNode, xPosition: number) => {
-    const data = node.data as any; // CheckpointPathData
+    const data = node.data as CheckpointPathData;
     const bubbleSize = 90;
 
     const getCheckpointColor = () => {
@@ -302,6 +372,23 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
 
   return (
     <View style={styles.container}>
+      {/* ✨ Espacio para cámara frontal integrada */}
+      <View style={styles.notchSafeArea} />
+      
+      {/* 🫧 Burbujas flotantes de fondo */}
+      <FloatingBubbles 
+        bubbleCount={6} 
+        colors={[
+          'rgba(74, 144, 226, 0.1)', 
+          'rgba(255, 107, 53, 0.1)', 
+          'rgba(255, 255, 255, 0.15)'
+        ]}
+        speed={15000}
+      />
+      
+      {/* ✨ Estrellas parpadeantes */}
+      <StarParticles starCount={12} twinkleSpeed={3000} />
+      
       <LinearGradient
         colors={[ARJU_COLORS.BACKGROUND_SAGE, '#F0F8E8']}
         style={styles.background}
@@ -326,6 +413,14 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
           </View>
         </ScrollView>
       </LinearGradient>
+      
+      {/* 🎉 Sistema de confetti para celebraciones */}
+      <ConfettiExplosion 
+        trigger={showConfetti}
+        particleCount={25}
+        duration={2500}
+        onComplete={() => setShowConfetti(false)}
+      />
     </View>
   );
 };
@@ -333,6 +428,10 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  notchSafeArea: {
+    height: 44, // Espacio para cámaras frontales integradas
+    backgroundColor: ARJU_COLORS.BACKGROUND_SAGE,
   },
   background: {
     flex: 1,
