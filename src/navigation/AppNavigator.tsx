@@ -15,6 +15,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import LessonScreen from '../screens/LessonScreen'; // Importar la nueva pantalla
 import ShopScreen from '../screens/ShopScreen';
+import LeaderboardScreen from '../screens/LeaderboardScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -43,6 +44,9 @@ const getTabBarIcon = (routeName: string, focused: boolean): keyof typeof Ionico
       break;
     case 'Settings':
       iconName = focused ? 'settings' : 'settings-outline';
+      break;
+    case 'Leaderboard':
+      iconName = focused ? 'trophy' : 'trophy-outline';
       break;
     default:
       iconName = 'help-outline';
@@ -105,12 +109,22 @@ function TabNavigator() {
       <Tab.Screen
         name="Shop"
         component={ShopScreen}
-        options={{ tabBarLabel: 'Tienda' }}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cart" color={color} size={size} />
+          ),
+          headerShown: false,
+        }}
       />
-      <Tab.Screen 
-        name="Settings" 
-        component={SettingsScreen}
-        options={{ tabBarLabel: 'Ajustes' }}
+      <Tab.Screen
+        name="Leaderboard"
+        component={LeaderboardScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="trophy" color={color} size={size} />
+          ),
+          headerShown: false,
+        }}
       />
     </Tab.Navigator>
   );

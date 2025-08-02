@@ -1,5 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Verse, StudyProgress, StudySession, UserStats, Achievement, Chapter, AppSettings, LearningPath, Lesson, GameState, Unit } from '../types';
+import { 
+  Verse, 
+  StudyProgress, 
+  StudySession, 
+  UserStats, 
+  Achievement, 
+  Chapter, 
+  AppSettings, 
+  LearningPath, 
+  Lesson, 
+  GameState, 
+  Unit, 
+  LeaderboardEntry,
+  Exercise,
+  ExerciseType,
+  MultipleChoiceExercise,
+  ListenExercise,
+  MultipleChoiceOption
+} from '../types';
 import versesData from '../../assets/data/verses.json';
 
 // Constantes para almacenamiento local
@@ -663,6 +681,30 @@ class GitaDataService {
     }
   }
   
+  getLeaderboardData(): LeaderboardEntry[] {
+    // Simulación de datos de leaderboard
+    const users: LeaderboardEntry[] = [
+      { id: 'user-1', username: 'KrishnaFan', xp: 4500, avatarUrl: 'https://i.pravatar.cc/150?u=user-1' },
+      { id: 'user-2', username: 'ArjunaDevotee', xp: 4210, avatarUrl: 'https://i.pravatar.cc/150?u=user-2' },
+      { id: 'user-3', username: 'GitaLearner', xp: 3980, avatarUrl: 'https://i.pravatar.cc/150?u=user-3' },
+      { id: 'user-current', username: 'Tú', xp: 3850, avatarUrl: 'https://i.pravatar.cc/150?u=user-current', isCurrentUser: true },
+      { id: 'user-5', username: 'SanskritScholar', xp: 3700, avatarUrl: 'https://i.pravatar.cc/150?u=user-5' },
+      { id: 'user-6', username: 'YogaMaster', xp: 3450, avatarUrl: 'https://i.pravatar.cc/150?u=user-6' },
+      { id: 'user-7', username: 'VedantaStudent', xp: 3200, avatarUrl: 'https://i.pravatar.cc/150?u=user-7' },
+      { id: 'user-8', username: 'BhaktiHeart', xp: 2950, avatarUrl: 'https://i.pravatar.cc/150?u=user-8' },
+      { id: 'user-9', username: 'DharmaChaser', xp: 2700, avatarUrl: 'https://i.pravatar.cc/150?u=user-9' },
+      { id: 'user-10', username: 'KarmaWarrior', xp: 2500, avatarUrl: 'https://i.pravatar.cc/150?u=user-10' },
+      { id: 'user-11', username: 'MokshaSeeker', xp: 2250, avatarUrl: 'https://i.pravatar.cc/150?u=user-11' },
+      { id: 'user-12', username: 'AtmaExplorer', xp: 2000, avatarUrl: 'https://i.pravatar.cc/150?u=user-12' },
+      { id: 'user-13', username: 'PranaFlow', xp: 1800, avatarUrl: 'https://i.pravatar.cc/150?u=user-13' },
+      { id: 'user-14', username: 'JnanaPath', xp: 1600, avatarUrl: 'https://i.pravatar.cc/150?u=user-14' },
+      { id: 'user-15', username: 'OMShanti', xp: 1400, avatarUrl: 'https://i.pravatar.cc/150?u=user-15' },
+    ];
+
+    // Ordenar por XP descendente
+    return users.sort((a, b) => b.xp - a.xp);
+  }
+
   // ==================== SETTINGS ====================
   
   async getAppSettings(): Promise<AppSettings> {
@@ -696,6 +738,137 @@ class GitaDataService {
   // ==================== DATA MANAGEMENT ====================
 
   async clearAllData(): Promise<void> {
+    try {
+      const keys = Object.values(STORAGE_KEYS);
+      await AsyncStorage.multiRemove(keys);
+    } catch (error) {
+      console.error('Error clearing all data:', error);
+    }
+  }
+
+  // ==================== EXERCISES ====================
+
+  async getExercisesForLesson(chapterNumber: number, lessonId: string): Promise<Exercise[]> {
+    const lesson = await this.getLesson(chapterNumber, lessonId);
+    if (!lesson || lesson.verses.length === 0) {
+      return [];
+    }
+
+    const exercises: Exercise[] = [];
+
+    // Crear ejercicios para cada verso de la lección
+    for (const verse of lesson.verses) {
+      const exerciseType = this._getRandomExerciseType(verse);
+      let exercise: Exercise | null = null;
+
+      switch (exerciseType) {
+        case ExerciseType.MULTIPLE_CHOICE_TRANSLATION:
+          exercise = this._createMultipleChoiceExercise(verse);
+          break;
+        case ExerciseType.LISTEN_AND_CHOOSE:
+          exercise = this._createListenExercise(verse);
+          break;
+        // Otros tipos de ejercicios se pueden añadir aquí
+      }
+
+      if (exercise) {
+        exercises.push(exercise);
+      }
+    }
+
+    // Mezclar los ejercicios para que no siempre aparezcan en el mismo orden
+    return this._shuffleArray(exercises);
+  }
+
+  private _createListenExercise(verse: Verse): ListenExercise {
+    const options: MultipleChoiceOption[] = [];
+    const correctOptionId = `verse-${verse.capitulo}-${verse.verso}`;
+
+    // Añadir la opción correcta
+    options.push({ id: correctOptionId, text: verse.transliteracion });
+
+    // Añadir 3 opciones incorrectas de otros versos
+    const wrongVerses = this._shuffleArray(this.verses.filter(v => v.sanskrit !== verse.sanskrit)).slice(0, 3);
+    wrongVerses.forEach(v => {
+      options.push({ id: `verse-${v.capitulo}-${v.verso}`, text: v.transliteracion });
+    });
+
+    return {
+      verse,
+      type: ExerciseType.LISTEN_AND_CHOOSE,
+      question: 'Escucha el audio y elige la transliteración correcta',
+      options: this._shuffleArray(options),
+      correctOptionId,
+      isCorrect: null,
+    };
+  }
+
+  private _createMultipleChoiceExercise(verse: Verse): MultipleChoiceExercise {
+    const options: MultipleChoiceOption[] = [];
+    const correctOptionId = this.getVerseId(verse);
+
+    // Añadir la opción correcta
+    options.push({ id: correctOptionId, text: verse.sanskrit });
+
+    // Añadir 3 opciones incorrectas
+    const wrongVerses = this._shuffleArray(this.verses.filter(v => v.sanskrit !== verse.sanskrit)).slice(0, 3);
+    wrongVerses.forEach(v => {
+      options.push({ id: this.getVerseId(v), text: v.sanskrit });
+    });
+
+    return {
+      verse,
+      type: ExerciseType.MULTIPLE_CHOICE_TRANSLATION,
+      question: 'Selecciona la traducción correcta del verso',
+      options: this._shuffleArray(options),
+      correctOptionId,
+      isCorrect: null,
+    };
+  }
+
+  private _generateTranslationOptions(verse: Verse): MultipleChoiceOption[] {
+    const options: MultipleChoiceOption[] = [];
+    const correctOptionId = this.getVerseId(verse);
+
+    // Añadir la opción correcta
+    options.push({ id: correctOptionId, text: verse.sanskrit });
+
+    // Añadir 3 opciones incorrectas
+    const wrongVerses = this._shuffleArray(this.verses.filter(v => v.sanskrit !== verse.sanskrit)).slice(0, 3);
+    wrongVerses.forEach(v => {
+      options.push({ id: this.getVerseId(v), text: v.sanskrit });
+    });
+
+    return this._shuffleArray(options);
+  }
+
+  private _shuffleArray<T>(array: T[]): T[] {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  private _getRandomExerciseType(verse: Verse): ExerciseType {
+    const availableTypes: ExerciseType[] = [];
+
+    if ((verse as any).audioUrl) {
+      availableTypes.push(ExerciseType.LISTEN_AND_CHOOSE);
+    }
+    
+    // Siempre añadir opción múltiple como opción por defecto
+    availableTypes.push(ExerciseType.MULTIPLE_CHOICE_TRANSLATION);
+
+    // Podríamos añadir más lógicas aquí, por ejemplo, si el verso es corto, añadir "Completar el verso"
+    // Por ahora, elegimos aleatoriamente entre los tipos disponibles.
+    
+    const randomIndex = Math.floor(Math.random() * availableTypes.length);
+    return availableTypes[randomIndex];
+  }
+
+  // --- AsyncStorage Management ---
+  async _clearAllData() {
     try {
       const keys = Object.values(STORAGE_KEYS);
       await AsyncStorage.multiRemove(keys);

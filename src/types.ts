@@ -5,6 +5,7 @@ export interface Verse {
   transliteracion: string;
   traduccion: string;
   comentario?: string;
+  audioUrl?: string;
 }
 
 export interface StudyProgress {
@@ -85,12 +86,19 @@ export interface LearningPath {
 
 export interface GameState {
   xp: number;
-  hearts: number;
   gems: number;
+  hearts: number;
   streak: number;
-  lastSessionDate: string | null; // ISO string
-  streakFreezeActive: boolean;
-  heartsLastRefill: string | null; // ISO string
+  lastCompletedDate: string | null;
+  heartsLastRefill: string | null;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  username: string;
+  xp: number;
+  avatarUrl: string;
+  isCurrentUser?: boolean;
 }
 
 // --- Exercise Types ---
@@ -99,6 +107,7 @@ export enum ExerciseType {
   MULTIPLE_CHOICE_TRANSLATION = 'MULTIPLE_CHOICE_TRANSLATION',
   COMPLETE_THE_VERSE = 'COMPLETE_THE_VERSE',
   MATCH_THE_WORDS = 'MATCH_THE_WORDS',
+  LISTEN_AND_CHOOSE = 'LISTEN_AND_CHOOSE',
 }
 
 export interface MultipleChoiceOption {
@@ -118,6 +127,25 @@ export interface MultipleChoiceExercise extends BaseExercise {
   correctOptionId: string;
 }
 
+export interface ListenExercise extends BaseExercise {
+  type: ExerciseType.LISTEN_AND_CHOOSE;
+  question: string; // e.g., "Select the correct transliteration"
+  options: MultipleChoiceOption[];
+  correctOptionId: string;
+}
+
+export interface WordPair {
+  id: string;
+  sanskrit: string;
+  translation: string;
+}
+
+export interface MatchTheWordsExercise extends BaseExercise {
+  type: ExerciseType.MATCH_THE_WORDS;
+  question: string; // e.g., "Match the words with their meaning"
+  pairs: WordPair[];
+}
+
 export interface CompleteTheVerseExercise extends BaseExercise {
   type: ExerciseType.COMPLETE_THE_VERSE;
   question: string; // The verse with a blank
@@ -125,4 +153,4 @@ export interface CompleteTheVerseExercise extends BaseExercise {
 }
 
 // A union type for all possible exercises
-export type Exercise = MultipleChoiceExercise | CompleteTheVerseExercise;
+export type Exercise = MultipleChoiceExercise | CompleteTheVerseExercise | ListenExercise | MatchTheWordsExercise;
