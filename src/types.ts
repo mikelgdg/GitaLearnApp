@@ -55,3 +55,39 @@ export interface AppSettings {
   dailyReminder: boolean;
   theme: 'light' | 'dark';
 }
+
+// --- Duolingo-style Gamification Types ---
+
+export interface Lesson {
+  id: string; // e.g., "1-1" for Chapter 1, Lesson 1
+  chapterNumber: number;
+  lessonNumber: number;
+  title: string;
+  totalVerses: number;
+  status: 'locked' | 'unlocked' | 'completed';
+  masteryLevel: number; // 0-5 stars
+}
+
+export interface Unit {
+  chapterNumber: number;
+  title: string;
+  description: string;
+  lessons: Lesson[];
+}
+
+export interface LearningPath {
+  units: Unit[];
+  lastUnlockedLesson: {
+    chapterNumber: number;
+    lessonNumber: number;
+  };
+}
+
+export interface GameState {
+  xp: number;
+  hearts: number;
+  gems: number;
+  streak: number;
+  lastSessionDate: string | null; // ISO string
+  streakFreezeActive: boolean;
+}

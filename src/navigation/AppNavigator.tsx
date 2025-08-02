@@ -13,11 +13,12 @@ import StudyScreen from '../screens/StudyScreen';
 import ProgressScreen from '../screens/ProgressScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
+import LessonScreen from '../screens/LessonScreen'; // Importar la nueva pantalla
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-const getTabBarIcon = (routeName: string, focused: boolean) => {
+const getTabBarIcon = (routeName: string, focused: boolean): keyof typeof Ionicons.glyphMap => {
   let iconName: keyof typeof Ionicons.glyphMap;
 
   switch (routeName) {
@@ -107,27 +108,21 @@ function TabNavigator() {
 }
 
 // Navegador principal con Stack
+function AppStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="MainTabs" component={TabNavigator} />
+      <Stack.Screen name="ChapterDetail" component={ChapterDetailScreen as React.FC} />
+      <Stack.Screen name="VerseDetail" component={VerseDetailScreen} />
+      <Stack.Screen name="Lesson" component={LessonScreen as React.FC} />
+    </Stack.Navigator>
+  );
+}
+
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen 
-          name="MainTabs" 
-          component={TabNavigator}
-        />
-        <Stack.Screen 
-          name="VerseDetail" 
-          component={VerseDetailScreen}
-        />
-        <Stack.Screen 
-          name="ChapterDetail" 
-          component={ChapterDetailScreen as React.FC<any>}
-        />
-      </Stack.Navigator>
+      <AppStack />
     </NavigationContainer>
   );
 }

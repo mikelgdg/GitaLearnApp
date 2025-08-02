@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Verse, StudyProgress, StudySession, UserStats, Achievement, Chapter, AppSettings } from '../types';
+import { Verse, StudyProgress, StudySession, UserStats, Achievement, Chapter, AppSettings, LearningPath, Lesson, GameState } from '../types';
 import versesData from '../../assets/data/verses.json';
 
 // Constantes para almacenamiento local
@@ -493,27 +493,129 @@ class GitaDataService {
       { number: 13, title: 'Ksetra Ksetrajna Vibhaga Yoga', versesCount: 35, description: 'La naturaleza, el disfrutador y la conciencia' },
       { number: 14, title: 'Gunatraya Vibhaga Yoga', versesCount: 27, description: 'Las tres modalidades de la naturaleza material' },
       { number: 15, title: 'Purusottama Yoga', versesCount: 20, description: 'El yoga de la Persona Suprema' },
-      { number: 16, title: 'Daivasura Sampad Vibhaga Yoga', versesCount: 24, description: 'Naturalezas divinas y demoníacas' },
-      { number: 17, title: 'Sraddhatraya Vibhaga Yoga', versesCount: 28, description: 'Las divisiones de la fe' },
-      { number: 18, title: 'Moksa Sannyasa Yoga', versesCount: 78, description: 'La conclusión: la perfección de la renuncia y la entrega' },
+      { number: 16, 'title': 'Daivasura Sampad Vibhaga Yoga', versesCount: 24, description: 'Naturalezas divinas y demoníacas' },
+      { number: 17, 'title': 'Sraddhatraya Vibhaga Yoga', versesCount: 28, description: 'Las divisiones de la fe' },
+      { number: 18, 'title': 'Moksa Sannyasa Yoga', versesCount: 78, description: 'La perfección de la renuncia' },
     ];
     
-    return chapters.find(ch => ch.number === chapterNumber) || chapters[0];
+    const chapter = chapters.find(c => c.number === chapterNumber);
+    return chapter || { number: chapterNumber, title: 'Desconocido', versesCount: 0, description: '' };
   }
 
-  /**
-   * Obtiene todos los capítulos
-   */
   async getAllChapters(): Promise<Chapter[]> {
-    const chapters: Chapter[] = [];
-    for (let i = 1; i <= 18; i++) {
-      chapters.push(await this.getChapter(i));
-    }
-    return chapters;
+    // Esta información podría venir de un archivo JSON separado en el futuro
+    return [
+      { number: 1, title: 'Arjuna Visada Yoga', versesCount: 47, description: 'El lamento de Arjuna' },
+      { number: 2, title: 'Sankhya Yoga', versesCount: 72, description: 'Conocimiento trascendental' },
+      { number: 3, title: 'Karma Yoga', versesCount: 43, description: 'El yoga de la acción' },
+      { number: 4, title: 'Jnana Karma Sannyasa Yoga', versesCount: 42, description: 'Conocimiento y renuncia' },
+      { number: 5, title: 'Karma Sannyasa Yoga', versesCount: 29, description: 'Renuncia a la acción' },
+      { number: 6, title: 'Dhyana Yoga', versesCount: 47, description: 'El yoga de la meditación' },
+      { number: 7, title: 'Jnana Vijnana Yoga', versesCount: 30, description: 'Conocimiento del Absoluto' },
+      { number: 8, title: 'Aksara Brahma Yoga', versesCount: 28, description: 'El Brahman imperecedero' },
+      { number: 9, title: 'Raja Vidya Raja Guhya Yoga', versesCount: 34, description: 'El conocimiento más confidencial' },
+      { number: 10, title: 'Vibhuti Yoga', versesCount: 42, description: 'Las opulencias del Absoluto' },
+      { number: 11, title: 'Visvarupa Darshana Yoga', versesCount: 55, description: 'La forma universal' },
+      { number: 12, title: 'Bhakti Yoga', versesCount: 20, description: 'El yoga de la devoción' },
+      { number: 13, title: 'Ksetra Ksetrajna Vibhaga Yoga', versesCount: 35, description: 'Naturaleza y conciencia' },
+      { number: 14, title: 'Gunatraya Vibhaga Yoga', versesCount: 27, description: 'Las tres modalidades' },
+      { number: 15, title: 'Purusottama Yoga', versesCount: 20, description: 'El yoga de la Persona Suprema' },
+      { number: 16, 'title': 'Daivasura Sampad Vibhaga Yoga', versesCount: 24, description: 'Naturalezas divinas y demoníacas' },
+      { number: 17, 'title': 'Sraddhatraya Vibhaga Yoga', versesCount: 28, description: 'Las divisiones de la fe' },
+      { number: 18, 'title': 'Moksa Sannyasa Yoga', versesCount: 78, description: 'La perfección de la renuncia' },
+    ];
   }
 
-  // ==================== APP SETTINGS ====================
+  // ==================== LEARNING PATH (DUOLINGO STYLE) ====================
 
+  async getLearningPath(): Promise<LearningPath> {
+    const chapters = await this.getAllChapters();
+    const progress = await this.getStudyProgress();
+    const versesPerLesson = 5; // Configurable
+
+    let lastUnlockedLesson = { chapterNumber: 1, lessonNumber: 1 };
+    let previousLessonCompleted = true;
+
+    const units = chapters.map(chapter => {
+      const lessons: Lesson[] = [];
+      for (let i = 0; i < chapter.versesCount; i += versesPerLesson) {
+        const lessonNumber = Math.floor(i / versesPerLesson) + 1;
+        const lessonVerses = this.verses.filter(v => v.capitulo === chapter.number && v.verso > i && v.verso <= i + versesPerLesson);
+        
+        const completedVersesInLesson = lessonVerses.filter(v => 
+          progress.some(p => p.verseId === this.getVerseId(v) && p.reviewCount > 0)
+        ).length;
+
+        const isCompleted = completedVersesInLesson === lessonVerses.length;
+        const masteryLevel = isCompleted ? Math.min(5, Math.floor(completedVersesInLesson / lessonVerses.length * 5)) : 0;
+
+        let status: 'locked' | 'unlocked' | 'completed' = 'locked';
+        if (previousLessonCompleted) {
+          status = 'unlocked';
+          lastUnlockedLesson = { chapterNumber: chapter.number, lessonNumber };
+        }
+        if (isCompleted) {
+          status = 'completed';
+        }
+        
+        previousLessonCompleted = isCompleted;
+
+        lessons.push({
+          id: `${chapter.number}-${lessonNumber}`,
+          chapterNumber: chapter.number,
+          lessonNumber,
+          title: `Lección ${lessonNumber}`,
+          totalVerses: lessonVerses.length,
+          status,
+          masteryLevel,
+        });
+      }
+      return {
+        chapterNumber: chapter.number,
+        title: chapter.title,
+        description: chapter.description,
+        lessons,
+      };
+    });
+
+    return {
+      units,
+      lastUnlockedLesson,
+    };
+  }
+
+  // ==================== GAME STATE ====================
+
+  async getGameState(): Promise<GameState> {
+    const defaultState: GameState = {
+      xp: 0,
+      hearts: 5,
+      gems: 100,
+      streak: 0,
+      lastSessionDate: null,
+      streakFreezeActive: false,
+    };
+    try {
+      const data = await AsyncStorage.getItem('game_state');
+      return data ? { ...defaultState, ...JSON.parse(data) } : defaultState;
+    } catch (error) {
+      console.error('Error getting game state:', error);
+      return defaultState;
+    }
+  }
+
+  async saveGameState(newState: Partial<GameState>): Promise<void> {
+    try {
+      const currentState = await this.getGameState();
+      const updatedState = { ...currentState, ...newState };
+      await AsyncStorage.setItem('game_state', JSON.stringify(updatedState));
+    } catch (error) {
+      console.error('Error saving game state:', error);
+    }
+  }
+  
+  // ==================== SETTINGS ====================
+  
   async getAppSettings(): Promise<AppSettings> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
