@@ -58,8 +58,20 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       Alert.alert('Lección bloqueada', 'Completa las lecciones anteriores para desbloquear esta.');
       return;
     }
-    // Navegar a la pantalla de la lección (que crearemos a continuación)
-    navigation.navigate('Lesson', { lessonId: lesson.id });
+
+    if (gameState && gameState.hearts <= 0) {
+      Alert.alert(
+        '¡Sin corazones!',
+        'Has agotado todos tus corazones. Practica lecciones anteriores para recuperarlos o espera a que se recarguen.',
+        [{ text: 'Entendido' }]
+      );
+      return;
+    }
+    
+    navigation.navigate('Lesson', { 
+      lessonId: lesson.id,
+      chapterNumber: lesson.chapterNumber 
+    });
   };
   
   const renderHeader = () => (
@@ -101,7 +113,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         }
         contentContainerStyle={styles.pathContainer}
       >
-        {learningPath?.units.map(unit => (
+        {learningPath?.units.map((unit: any) => (
           <UnitSection
             key={unit.chapterNumber}
             unit={unit}
