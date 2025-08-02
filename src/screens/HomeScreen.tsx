@@ -161,6 +161,20 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <Ionicons name="chevron-forward" size={24} color="white" />
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={[styles.actionButton, styles.fillInBlankAction]}
+            onPress={() => navigation?.navigate?.('Study', { mode: 'fill-in-the-blank' })}
+          >
+            <Ionicons name="create" size={24} color="white" />
+            <View style={styles.actionTextContainer}>
+              <Text style={styles.actionTitle}>Completar el verso</Text>
+              <Text style={styles.actionSubtitle}>
+                Pon a prueba tu memoria
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="white" />
+          </TouchableOpacity>
+
           <View style={styles.actionRow}>
             <TouchableOpacity
               style={[styles.actionButton, styles.secondaryAction]}
@@ -359,6 +373,10 @@ const styles = StyleSheet.create({
   },
   primaryAction: {
     backgroundColor: '#FF9933',
+    marginBottom: 15,
+  },
+  fillInBlankAction: {
+    backgroundColor: '#2196F3',
     marginBottom: 15,
   },
   actionTextContainer: {

@@ -4,33 +4,49 @@ import { Ionicons } from '@expo/vector-icons';
 import { gitaDataService } from '../services/GitaDataService';
 import { Verse, StudyProgress } from '../types';
 
+type StudyMode = 'srs' | 'fill-in-the-blank';
+
 export default function StudyScreen({ navigation, route }: any) {
   const [versesToReview, setVersesToReview] = useState<Verse[]>([]);
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [studyMode, setStudyMode] = useState<StudyMode>('srs');
+  const [hiddenVerseText, setHiddenVerseText] = useState('');
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    loadVerses();
+    const mode = route.params?.mode || 'srs';
+    setStudyMode(mode);
+    loadVerses(mode);
     setSessionStartTime(new Date());
-  }, []);
+  }, [route.params?.mode]);
 
-  const loadVerses = async () => {
+  const loadVerses = async (mode: StudyMode) => {
     try {
       setIsLoading(true);
-      const verses = await gitaDataService.getVersesForReview();
-      if (verses.length === 0) {
-        const randomVerses = await Promise.all(
-          Array.from({ length: 5 }, () => gitaDataService.getRandomVerse())
+      let verses: Verse[];
+      if (mode === 'fill-in-the-blank') {
+        verses = await Promise.all(
+          Array.from({ length: 10 }, () => gitaDataService.getRandomVerse())
         );
-        setVersesToReview(randomVerses);
       } else {
-        setVersesToReview(verses);
+        const versesFromSrs = await gitaDataService.getVersesForReview();
+        if (versesFromSrs.length === 0) {
+          verses = await Promise.all(
+            Array.from({ length: 5 }, () => gitaDataService.getRandomVerse())
+          );
+        } else {
+          verses = versesFromSrs;
+        }
+      }
+      setVersesToReview(verses);
+      if (verses.length > 0 && mode === 'fill-in-the-blank') {
+        setHiddenVerseText(gitaDataService.getVerseWithHiddenWords(verses[0]));
       }
     } catch (error) {
-      console.error("Error loading verses for review:", error);
+      console.error("Error loading verses:", error);
       Alert.alert("Error", "No se pudieron cargar los versos para estudiar.");
     } finally {
       setIsLoading(false);
@@ -41,39 +57,61 @@ export default function StudyScreen({ navigation, route }: any) {
     if (currentVerseIndex >= versesToReview.length) return;
 
     const verse = versesToReview[currentVerseIndex];
-    await gitaDataService.saveVerseProgress(verse, difficulty);
+    if (studyMode === 'srs') {
+        await gitaDataService.saveVerseProgress(verse, difficulty);
+    }
 
+    goToNextVerse();
+  };
+
+  const goToNextVerse = () => {
     if (currentVerseIndex < versesToReview.length - 1) {
-      setCurrentVerseIndex(currentVerseIndex + 1);
-      handleFlip(); // Reset flip animation
+      const nextIndex = currentVerseIndex + 1;
+      setCurrentVerseIndex(nextIndex);
+      if (studyMode === 'fill-in-the-blank' && versesToReview[nextIndex]) {
+        setHiddenVerseText(gitaDataService.getVerseWithHiddenWords(versesToReview[nextIndex]));
+      }
+      handleFlip(true); // Reset flip animation to show front
     } else {
-      const endTime = new Date();
-      const duration = sessionStartTime ? (endTime.getTime() - sessionStartTime.getTime()) / (1000 * 60) : 0;
-      
-      await gitaDataService.recordStudySession({
-        date: new Date(),
-        versesStudied: versesToReview.map(v => gitaDataService.getVerseId(v)),
-        duration: Math.round(duration),
-        correctAnswers: versesToReview.length, 
-        totalQuestions: versesToReview.length,
-      });
-
-      Alert.alert(
-        "¡Felicidades!",
-        "Has completado tu sesión de estudio.",
-        [{ text: "OK", onPress: () => navigation.goBack() }]
-      );
+      finishSession();
     }
   };
 
-  const handleFlip = () => {
+  const finishSession = async () => {
+    const endTime = new Date();
+    const duration = sessionStartTime ? (endTime.getTime() - sessionStartTime.getTime()) / 1000 : 0;
+    
+    if (studyMode === 'srs') {
+        await gitaDataService.recordStudySession({
+          date: new Date(),
+          versesStudied: versesToReview.map(v => gitaDataService.getVerseId(v)),
+          duration: Math.round(duration),
+          correctAnswers: versesToReview.length, 
+          totalQuestions: versesToReview.length,
+        });
+    }
+
+    Alert.alert(
+      "¡Felicidades!",
+      "Has completado tu sesión de estudio.",
+      [{ text: "OK", onPress: () => navigation.goBack() }]
+    );
+  };
+
+  const handleFlip = (forceReset = false) => {
+    if (forceReset) {
+      animatedValue.setValue(0);
+      setIsFlipped(false);
+      return;
+    }
     const toValue = isFlipped ? 0 : 180;
     Animated.timing(animatedValue, {
       toValue,
       duration: 600,
       useNativeDriver: true,
-    }).start();
-    setIsFlipped(!isFlipped);
+    }).start(() => {
+        setIsFlipped(!isFlipped);
+    });
   };
 
   if (isLoading) {
@@ -110,6 +148,42 @@ export default function StudyScreen({ navigation, route }: any) {
     transform: [{ rotateY: backInterpolate }],
   };
 
+  const renderCardContent = () => {
+    if (studyMode === 'fill-in-the-blank') {
+      return (
+        <>
+          <Animated.View style={[styles.card, styles.front, frontAnimatedStyle, { backfaceVisibility: 'hidden' }]}>
+            <Text style={styles.cardTitle}>Completa el verso</Text>
+            <Text style={styles.cardText}>{hiddenVerseText}</Text>
+            <Text style={styles.cardHint}>Toca para ver la respuesta</Text>
+          </Animated.View>
+          <Animated.View style={[styles.card, styles.back, backAnimatedStyle, { backfaceVisibility: 'hidden' }]}>
+            <Text style={styles.cardTitle}>Respuesta</Text>
+            <Text style={[styles.cardText, styles.sanskritText]}>{currentVerse.transliteracion || currentVerse.sanskrit}</Text>
+            <Text style={styles.cardHint}>Toca para volver</Text>
+          </Animated.View>
+        </>
+      );
+    }
+
+    // SRS mode
+    return (
+      <>
+        <Animated.View style={[styles.card, styles.front, frontAnimatedStyle, { backfaceVisibility: 'hidden' }]}>
+          <Text style={styles.cardTitle}>Traducción</Text>
+          <Text style={styles.cardText}>{currentVerse.traduccion}</Text>
+          <Text style={styles.cardHint}>Toca para ver el sánscrito</Text>
+        </Animated.View>
+        <Animated.View style={[styles.card, styles.back, backAnimatedStyle, { backfaceVisibility: 'hidden' }]}>
+          <Text style={styles.cardTitle}>Sánscrito</Text>
+          <Text style={[styles.cardText, styles.sanskritText]}>{currentVerse.sanskrit}</Text>
+          <Text style={styles.cardText}>{currentVerse.transliteracion}</Text>
+          <Text style={styles.cardHint}>Toca para volver a la traducción</Text>
+        </Animated.View>
+      </>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -123,38 +197,36 @@ export default function StudyScreen({ navigation, route }: any) {
       </View>
 
       <View style={styles.flashcardContainer}>
-        <TouchableOpacity onPress={handleFlip} style={styles.flashcardTouchable}>
-          <Animated.View style={[styles.card, styles.front, frontAnimatedStyle]}>
-            <Text style={styles.cardTitle}>Traducción</Text>
-            <Text style={styles.cardText}>{currentVerse.traduccion}</Text>
-            <Text style={styles.cardHint}>Toca para ver el sánscrito</Text>
-          </Animated.View>
-          <Animated.View style={[styles.card, styles.back, backAnimatedStyle]}>
-            <Text style={styles.cardTitle}>Sánscrito</Text>
-            <Text style={[styles.cardText, styles.sanskritText]}>{currentVerse.sanskrit}</Text>
-            <Text style={styles.cardText}>{currentVerse.transliteracion}</Text>
-            <Text style={styles.cardHint}>Toca para volver a la traducción</Text>
-          </Animated.View>
+        <TouchableOpacity onPress={() => handleFlip()} style={styles.flashcardTouchable}>
+          {renderCardContent()}
         </TouchableOpacity>
       </View>
 
       {isFlipped && (
         <View style={styles.evaluationContainer}>
-          <Text style={styles.evaluationTitle}>¿Cómo de bien lo recordabas?</Text>
-          <View style={styles.buttonsRow}>
-            <TouchableOpacity style={[styles.evalButton, styles.againButton]} onPress={() => handleEvaluation('again')}>
-              <Text style={styles.evalButtonText}>Otra vez</Text>
+           {studyMode === 'srs' ? (
+            <>
+              <Text style={styles.evaluationTitle}>¿Cómo de bien lo recordabas?</Text>
+              <View style={styles.buttonsRow}>
+                <TouchableOpacity style={[styles.evalButton, styles.againButton]} onPress={() => handleEvaluation('again')}>
+                  <Text style={styles.evalButtonText}>Otra vez</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.evalButton, styles.hardButton]} onPress={() => handleEvaluation('hard')}>
+                  <Text style={styles.evalButtonText}>Difícil</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.evalButton, styles.goodButton]} onPress={() => handleEvaluation('good')}>
+                  <Text style={styles.evalButtonText}>Bien</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.evalButton, styles.easyButton]} onPress={() => handleEvaluation('easy')}>
+                  <Text style={styles.evalButtonText}>Fácil</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <TouchableOpacity style={[styles.evalButton, styles.goodButton, styles.nextButton]} onPress={goToNextVerse}>
+              <Text style={styles.evalButtonText}>Siguiente</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.evalButton, styles.hardButton]} onPress={() => handleEvaluation('hard')}>
-              <Text style={styles.evalButtonText}>Difícil</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.evalButton, styles.goodButton]} onPress={() => handleEvaluation('good')}>
-              <Text style={styles.evalButtonText}>Bien</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.evalButton, styles.easyButton]} onPress={() => handleEvaluation('easy')}>
-              <Text style={styles.evalButtonText}>Fácil</Text>
-            </TouchableOpacity>
-          </View>
+          )}
         </View>
       )}
     </SafeAreaView>
@@ -164,37 +236,14 @@ export default function StudyScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-    justifyContent: 'space-between',
-  },
-  loadingText: {
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 18,
-    color: '#666',
-  },
-  infoText: {
-    textAlign: 'center',
-    marginTop: 50,
-    fontSize: 18,
-    color: '#333',
-  },
-  goBackButton: {
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: '#FF9933',
-    borderRadius: 10,
-    alignSelf: 'center',
-  },
-  goBackButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+    backgroundColor: '#f0f4f8',
+    paddingTop: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   progressBarContainer: {
     flex: 1,
@@ -205,12 +254,11 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: '100%',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: '#4CAF50',
     borderRadius: 5,
   },
   progressText: {
     fontSize: 14,
-    fontWeight: 'bold',
     color: '#333',
   },
   flashcardContainer: {
@@ -221,81 +269,117 @@ const styles = StyleSheet.create({
   },
   flashcardTouchable: {
     width: '100%',
-    height: 300,
+    height: '80%',
   },
   card: {
-    position: 'absolute',
     width: '100%',
     height: '100%',
-    backfaceVisibility: 'hidden',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+    backfaceVisibility: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
     elevation: 5,
   },
   front: {
-    backgroundColor: 'white',
+    position: 'absolute',
+    top: 0,
   },
   back: {
-    backgroundColor: '#FFF8E1',
+    position: 'absolute',
+    top: 0,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#FF9933',
-    marginBottom: 15,
+    color: '#888',
+    position: 'absolute',
+    top: 20,
   },
   cardText: {
-    fontSize: 18,
+    fontSize: 22,
     textAlign: 'center',
     color: '#333',
-    lineHeight: 26,
+    lineHeight: 32,
   },
   sanskritText: {
-    fontSize: 22,
-    marginBottom: 10,
+    fontFamily: 'sans-serif', // Specify a font that supports Devanagari if needed
   },
   cardHint: {
+    fontSize: 14,
+    color: '#aaa',
     position: 'absolute',
-    bottom: 15,
-    fontSize: 12,
-    color: '#999',
+    bottom: 20,
+    fontStyle: 'italic',
   },
   evaluationContainer: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: 'white',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    alignItems: 'center',
   },
   evaluationTitle: {
-    textAlign: 'center',
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 18,
+    fontWeight: '600',
     marginBottom: 15,
     color: '#333',
   },
   buttonsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    width: '100%',
   },
   evalButton: {
     paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    minWidth: 70,
+    paddingHorizontal: 18,
+    borderRadius: 25,
+    minWidth: 80,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   evalButtonText: {
     color: 'white',
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  againButton: { backgroundColor: '#FF6B6B' },
-  hardButton: { backgroundColor: '#FF9933' },
-  goodButton: { backgroundColor: '#4ECDC4' },
-  easyButton: { backgroundColor: '#57C4E5' },
+  againButton: {
+    backgroundColor: '#f44336',
+  },
+  hardButton: {
+    backgroundColor: '#FF9800',
+  },
+  goodButton: {
+    backgroundColor: '#4CAF50',
+  },
+  easyButton: {
+    backgroundColor: '#2196F3',
+  },
+  nextButton: {
+    width: '80%',
+  },
+  loadingText: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 50,
+  },
+  infoText: {
+    fontSize: 18,
+    textAlign: 'center',
+    margin: 20,
+  },
+  goBackButton: {
+    backgroundColor: '#2196F3',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  goBackButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

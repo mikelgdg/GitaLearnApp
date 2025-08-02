@@ -63,6 +63,32 @@ class GitaDataService {
     return `${verse.capitulo}-${verse.verso}`;
   }
 
+  /**
+   * Takes a verse and returns a version of its text with some words replaced by blanks.
+   * @param verse The verse to process.
+   * @param difficulty A number between 0.2 (easier) and 0.8 (harder) to control how many words are hidden.
+   * @returns The verse text with hidden words.
+   */
+  getVerseWithHiddenWords(verse: Verse, difficulty: number = 0.4): string {
+    const text = verse.transliteracion || verse.sanskrit;
+    const words = text.split(' ');
+    if (words.length < 3) {
+      return text; // Not enough words to hide anything meaningful
+    }
+
+    const wordsToHideCount = Math.floor(words.length * difficulty);
+    const hiddenIndices = new Set<number>();
+
+    while (hiddenIndices.size < wordsToHideCount) {
+      const randomIndex = Math.floor(Math.random() * words.length);
+      hiddenIndices.add(randomIndex);
+    }
+
+    return words
+      .map((word, index) => (hiddenIndices.has(index) ? '______' : word))
+      .join(' ');
+  }
+
   // ==================== FAVORITES ====================
 
   async getFavoriteVerseIds(): Promise<string[]> {
