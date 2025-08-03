@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,20 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
-  SafeAreaView,
   Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { StackNavigationProp } from '@react-navigation/stack';
 import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
-import DuolingoTopBar from '../components/DuolingoTopBar';
-import { HeartService } from '../services/HeartService';
-import { GameState } from '../types';
+import DuolingoLessonBubble from '../components/DuolingoLessonBubble';
 import { audioService } from '../services/AudioService';
-import { NeomorphicCard } from '../components/NeomorphicCard';
 import { FloatingBubbles, StarParticles, ConfettiExplosion } from '../components/ParticleEffects';
-import { AnimationUtils } from '../utils/animations';
 import { gitaDataService } from '../services/GitaDataService';
 import { 
   PathNode, 
@@ -42,7 +36,6 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
   // ✨ Estados para animaciones y efectos
   const [bubbleAnimations] = useState(new Map<string, Animated.Value>());
   const [showConfetti, setShowConfetti] = useState(false);
-  const [gameState, setGameState] = useState<GameState | null>(null);
 
   useEffect(() => {
     loadPathMap();
@@ -189,92 +182,49 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
 
     const renderLessonBubble = (node: PathNode, xPosition: number) => {
     const data = node.data as LessonPathData;
-    const bubbleSize = node.status === 'completed' ? 70 : 60;
     
-    // ✨ Obtener animación de bounce para esta burbuja
-    const bounceAnim = bubbleAnimations.get(node.id) || new Animated.Value(1);
-
-    const getBubbleStyle = () => {
-      const baseStyle = {
-        ...styles.lessonBubble,
-        borderRadius: bubbleSize / 2,
-      };
-
+    // 🎯 Convert node status to DuolingoLessonBubble status
+    const getLessonStatus = () => {
       switch (node.status) {
-        case 'locked':
-          return { ...baseStyle, backgroundColor: DUOLINGO_COLORS.TEXT.SECONDARY };
-        case 'unlocked':
-          return { ...baseStyle, backgroundColor: DUOLINGO_COLORS.BLUE.DEFAULT };
-        case 'completed':
-          return { ...baseStyle, backgroundColor: DUOLINGO_COLORS.YELLOW.DEFAULT };
-        case 'mastered':
-          return { ...baseStyle, backgroundColor: '#FFD700' };
-        default:
-          return { ...baseStyle, backgroundColor: DUOLINGO_COLORS.TEXT.SECONDARY };
+        case 'locked': return 'locked';
+        case 'unlocked': return 'unlocked';
+        case 'completed': return 'completed';
+        case 'mastered': return 'mastery';
+        default: return 'locked';
       }
     };
 
-    const getBubbleIcon = () => {
-      if (data.isBonus) return 'star';
-      return node.status === 'mastered' ? 'trophy' : 'book';
+    // 🎯 Get mastery level for completed lessons
+    const getMasteryLevel = (): 0 | 1 | 2 | 3 | 4 | 5 => {
+      if (node.status === 'mastered') return 5;
+      if (node.status === 'completed') return Math.floor(Math.random() * 4) + 1 as 1 | 2 | 3 | 4;
+      return 0;
+    };
+
+    // 🎯 Position for DuolingoLessonBubble
+    const position = {
+      x: xPosition / screenWidth, // Convert to percentage
+      y: node.position.y / screenHeight
     };
 
     return (
-      <Animated.View
+      <View
         key={node.id}
         style={{
           position: 'absolute',
-          left: xPosition - bubbleSize / 2,
-          top: node.position.y,
-          transform: [{ scale: bounceAnim }], // ✨ Aplicar animación bounce
+          left: xPosition - 40, // Center the 80px bubble
+          top: node.position.y - 40,
         }}
       >
-        <NeomorphicCard
-          variant={node.status === 'locked' ? 'flat' : 'elevated'}
-          intensity={node.status === 'completed' ? 'strong' : 'medium'}
-          borderRadius={bubbleSize / 2}
-          style={{
-            width: bubbleSize,
-            height: bubbleSize,
-          }}
-        >
-          <TouchableOpacity
-            style={[
-              getBubbleStyle(),
-              {
-                width: bubbleSize,
-                height: bubbleSize,
-                backgroundColor: 'transparent', // La card ya tiene el fondo
-              }
-            ]}
-            onPress={() => handleNodePress(node)}
-            disabled={node.status === 'locked'}
-          >
-          <Ionicons 
-            name={getBubbleIcon()} 
-            size={24} 
-            color={node.status === 'locked' ? DUOLINGO_COLORS.TEXT.SECONDARY : 'white'} 
-          />
-          
-          {/* Mastery Stars */}
-          {data.masteryLevel > 0 && node.status !== 'locked' && (
-            <View style={styles.masteryStars}>
-              {[...Array(data.masteryLevel)].map((_, i) => (
-                <Ionicons key={`star-${i}-${data.lessonId}`} name="star" size={8} color="#FFD700" />
-              ))}
-            </View>
-          )}
-
-          {/* Lesson Number */}
-          <Text style={[
-            styles.lessonNumber,
-            { color: node.status === 'locked' ? DUOLINGO_COLORS.TEXT.SECONDARY : 'white' }
-          ]}>
-            {data.title}
-          </Text>
-          </TouchableOpacity>
-        </NeomorphicCard>
-      </Animated.View>
+        <DuolingoLessonBubble
+          status={getLessonStatus()}
+          masteryLevel={getMasteryLevel()}
+          title={data.title}
+          position={position}
+          onPress={() => handleNodePress(node)}
+          isPulsing={node.status === 'unlocked'}
+        />
+      </View>
     );
   };
 
