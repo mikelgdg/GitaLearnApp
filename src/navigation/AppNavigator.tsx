@@ -8,10 +8,13 @@ import ChaptersScreen from '../screens/ChaptersScreen';
 import ChapterDetailScreen from '../screens/ChapterDetailScreen';
 import VerseDetailScreen from '../screens/VerseDetailScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import LessonScreen from '../screens/LessonScreen';
 import LearningPathMapScreen from '../screens/LearningPathMapScreen';
 import ShopScreen from '../screens/ShopScreen';
 import LeaderboardScreen from '../screens/LeaderboardScreen';
+import QuestsScreen from '../screens/QuestsScreen';
+import StreakScreen from '../screens/StreakScreen';
 
 // ✨ Importar custom tab bar
 import DuolingoTabBar from '../components/DuolingoTabBar';
@@ -90,7 +93,7 @@ function TabNavigator() {
       {/* 👤 PROFILE - Configuración y progreso */}
       <Tab.Screen 
         name="Profile" 
-        component={SettingsScreen}
+        component={ProfileScreen}
         options={{ tabBarLabel: 'PERFIL' }}
       />
     </Tab.Navigator>
@@ -134,6 +137,27 @@ function AppStack() {
       <Stack.Screen 
         name="LearningPath" 
         component={LearningPathMapScreen as React.FC<any>}
+        options={{
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
+      <Stack.Screen 
+        name="Quests" 
+        component={QuestsScreen as React.FC<any>}
+        options={{
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
+      <Stack.Screen 
+        name="Streak" 
+        component={StreakScreen as React.FC<any>}
+        options={{
+          ...TransitionPresets.SlideFromRightIOS,
+        }}
+      />
+      <Stack.Screen 
+        name="Settings" 
+        component={SettingsScreen as React.FC<any>}
         options={{
           ...TransitionPresets.SlideFromRightIOS,
         }}

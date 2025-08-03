@@ -23,7 +23,6 @@ import {
 } from '../types';
 import versesData from '../../assets/data/verses.json';
 import { SECTIONS, FOUNDATION_UNITS, ACTION_UNITS } from '../constants/sections';
-import { GemEarningService } from './GemEarningService';
 
 // Constantes para almacenamiento local
 const STORAGE_KEYS = {
@@ -849,6 +848,7 @@ class GitaDataService {
 
   /**
    * Crea un resumen de lección completo con gemas y achievements
+   * COMPORTAMIENTO IDÉNTICO A DUOLINGO: Usa LessonCompletionService
    */
   async createLessonSummary(
     correctAnswers: number,
@@ -856,32 +856,19 @@ class GitaDataService {
     isFirstTryPerfect: boolean = false
   ): Promise<LessonSummary> {
     try {
-      const gameState = await this.getGameState();
-      const currentStreak = gameState.streak;
+      // 🎯 Usar el servicio de integración para comportamiento IDÉNTICO a Duolingo
+      const { default: LessonCompletionService } = await import('./LessonCompletionService');
       
-      // Verificar si se completó una unidad
-      const isUnitComplete = await this.checkIfUnitCompleted(correctAnswers, totalAnswers);
-      
-      // Verificar achievements desbloqueados
-      const newAchievements = GemEarningService.checkForNewAchievements(
-        Math.round((correctAnswers / totalAnswers) * 100),
-        currentStreak,
-        gameState.xp,
-        isFirstTryPerfect
-      );
-
-      // Crear el resumen usando el servicio de gemas
-      return GemEarningService.createLessonSummary(
+      return await LessonCompletionService.processLessonCompletion(
         correctAnswers,
         totalAnswers,
         isFirstTryPerfect,
-        isUnitComplete,
-        currentStreak,
-        newAchievements
+        correctAnswers * 10 // XP base
       );
+      
     } catch (error) {
       console.error('Error creating lesson summary:', error);
-      // Retornar resumen por defecto en caso de error
+      // Fallback seguro (como Duolingo)
       return {
         xpGained: correctAnswers * 10,
         gemsEarned: 10,
@@ -898,12 +885,23 @@ class GitaDataService {
 
   /**
    * Actualiza el estado del juego después de completar una lección
+   * COMPORTAMIENTO IDÉNTICO A DUOLINGO: Usa LessonCompletionService
    */
   async updateGameStateAfterLesson(lessonSummary: LessonSummary): Promise<void> {
     try {
+      // 🎯 Usar el servicio de integración para actualización completa
+      const { default: LessonCompletionService } = await import('./LessonCompletionService');
+      
       const currentState = await this.getGameState();
-      const updatedState = GemEarningService.updateGameStateWithRewards(currentState, lessonSummary);
+      const updatedState = await LessonCompletionService.updateGameStateWithIntegration(
+        currentState, 
+        lessonSummary
+      );
+      
       await this.saveGameState(updatedState);
+      
+      console.log('✅ Game state updated via LessonCompletionService');
+      
     } catch (error) {
       console.error('Error updating game state after lesson:', error);
     }

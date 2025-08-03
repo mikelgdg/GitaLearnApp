@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { gitaDataService } from '../services/GitaDataService';
 import { audioService } from '../services/AudioService';
 import { Exercise, GameState, Verse, ExerciseType, MultipleChoiceOption, LessonSummary } from '../types';
-import LessonCompletionScreen from '../components/LessonCompletionScreen';
+import DuolingoLessonComplete from '../components/DuolingoLessonComplete';
 
 interface LessonScreenProps {
   route: {
@@ -344,10 +344,18 @@ const LessonScreen: React.FC<LessonScreenProps> = ({ route, navigation }) => {
 
       {/* Pantalla de Finalización de Lección */}
       {showCompletionScreen && lessonSummary && (
-        <LessonCompletionScreen
-          lessonSummary={lessonSummary}
-          onContinue={handleCompletionContinue}
+        <DuolingoLessonComplete
           visible={showCompletionScreen}
+          stats={{
+            correctAnswers: lessonSummary.perfectAnswers,
+            totalQuestions: lessonSummary.totalAnswers,
+            xpGained: lessonSummary.xpGained,
+            streakCount: lessonSummary.streakDays,
+            timeSpent: 180, // Valor por defecto
+            accuracy: lessonSummary.accuracy,
+          }}
+          onContinue={handleCompletionContinue}
+          lessonTitle={`Lección completada`}
         />
       )}
     </>

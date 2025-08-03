@@ -18,6 +18,7 @@ interface DuolingoTopBarProps {
   onHeartPress?: () => void;
   onGemPress?: () => void;
   onStreakPress?: () => void;
+  onQuestsPress?: () => void;
 }
 
 const DuolingoTopBar: React.FC<DuolingoTopBarProps> = ({
@@ -26,6 +27,7 @@ const DuolingoTopBar: React.FC<DuolingoTopBarProps> = ({
   onHeartPress,
   onGemPress,
   onStreakPress,
+  onQuestsPress,
 }) => {
   const [nextHeartTime, setNextHeartTime] = useState<number>(0);
   
@@ -252,6 +254,19 @@ const DuolingoTopBar: React.FC<DuolingoTopBarProps> = ({
         </Animated.View>
       </TouchableOpacity>
 
+      {/* Quests Section */}
+      {onQuestsPress && (
+        <TouchableOpacity 
+          style={styles.statContainer} 
+          onPress={onQuestsPress}
+          activeOpacity={0.7}
+        >
+          <View style={styles.questButton}>
+            <Ionicons name="trophy-outline" size={20} color={DUOLINGO_COLORS.PURPLE.DEFAULT} />
+          </View>
+        </TouchableOpacity>
+      )}
+
       {/* XP Section */}
       <View style={styles.xpContainer}>
         <View style={styles.xpBadge}>
@@ -339,6 +354,14 @@ const styles = StyleSheet.create({
     color: DUOLINGO_COLORS.TEXT.INVERSE,
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  questButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: DUOLINGO_COLORS.PURPLE.BACKGROUND,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

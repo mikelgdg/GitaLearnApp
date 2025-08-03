@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { DUOLINGO_COLORS } from '../../constants/DuolingoColors';
+import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
 import { TYPOGRAPHY } from '../../constants/DuolingoTypography';
 
 type LessonStatus = 'locked' | 'unlocked' | 'current' | 'completed' | 'mastery';

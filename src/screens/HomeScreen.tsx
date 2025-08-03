@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,19 +7,16 @@ import {
   SafeAreaView,
   RefreshControl,
   Alert,
-  TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { gitaDataService } from '../services/GitaDataService';
 import { LearningPath, Lesson, GameState } from '../types';
 import UnitSection from '../components/learning-path/UnitSection';
 import DuolingoTopBar from '../components/DuolingoTopBar';
-import WeeklyGoalWidget from '../components/WeeklyGoalWidget';
 import HeartService from '../services/HeartService';
 import { audioService } from '../services/AudioService';
 import { Ionicons } from '@expo/vector-icons';
-import { AnimatedButton } from '../components/AnimatedButton';
-import { NeomorphicCard } from '../components/NeomorphicCard';
+import DuolingoButton from '../components/DuolingoButton';
 import { FloatingBubbles, StarParticles } from '../components/ParticleEffects';
 
 interface HomeScreenProps {
@@ -90,19 +87,19 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      {/* ✨ Botón animado para acceder al mapa visual */}
-      <AnimatedButton
-        title="Ver Mapa de Aprendizaje"
+      {/* ✨ Botón Duolingo para acceder al mapa visual */}
+      <DuolingoButton
         onPress={() => {
           audioService.playBubbleTap();
           navigation.navigate('LearningPath');
         }}
         variant="primary"
         size="large"
-        icon={<Ionicons name="map" size={24} color="white" />}
-        glowing={true}
         style={styles.mapButton}
-      />
+      >
+        <Ionicons name="map" size={24} color="white" />
+        Ver Mapa de Aprendizaje
+      </DuolingoButton>
     </View>
   );
 
@@ -140,16 +137,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         />
       )}
 
-      {/* ✨ Weekly Goal Widget */}
-      {gameState && (
-        <WeeklyGoalWidget
-          currentXP={gameState.xp}
-          weeklyGoal={300} // Meta semanal de 300 XP
-          streakDays={gameState.streak}
-          onPress={() => Alert.alert('Meta Semanal', '¡Sigue practicando para alcanzar tu meta!')}
-        />
-      )}
-      
       {renderHeader()}
       <ScrollView
         style={styles.scrollView}
