@@ -9,7 +9,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { GameState } from '../types';
 import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
-import { DUOLINGO_TEXT_VARIANTS } from '../constants/DuolingoTypography';
 import HeartService from '../services/HeartService';
 import { audioService } from '../services/AudioService';
 
@@ -29,7 +28,104 @@ const DuolingoTopBar: React.FC<DuolingoTopBarProps> = ({
   onStreakPress,
 }) => {
   const [nextHeartTime, setNextHeartTime] = useState<number>(0);
+  
+  // 🎯 EXACT DUOLINGO ANIMATIONS
   const [heartPulseAnim] = useState(new Animated.Value(1));
+  const [gemBounceAnim] = useState(new Animated.Value(1));
+  const [streakFlameAnim] = useState(new Animated.Value(1));
+  const [heartShakeAnim] = useState(new Animated.Value(0));
+
+  // 💓 Heart pulse animation (when low hearts)
+  useEffect(() => {
+    if (gameState.hearts <= 1) {
+      const pulseAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(heartPulseAnim, {
+            toValue: 1.2,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(heartPulseAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseAnimation.start();
+      return () => pulseAnimation.stop();
+    }
+  }, [gameState.hearts, heartPulseAnim]);
+
+  // 🔥 Streak flame pulse animation
+  useEffect(() => {
+    const flameAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(streakFlameAnim, {
+          toValue: 1.1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(streakFlameAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    flameAnimation.start();
+    return () => flameAnimation.stop();
+  }, [streakFlameAnim]);
+
+  // 💎 Gem bounce on press
+  const handleGemPress = () => {
+    Animated.sequence([
+      Animated.timing(gemBounceAnim, {
+        toValue: 0.9,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(gemBounceAnim, {
+        toValue: 1,
+        friction: 3,
+        tension: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
+    if (onGemPress) onGemPress();
+  };
+
+  // ❤️ Heart press with shake if no hearts
+  const handleHeartPress = () => {
+    if (gameState.hearts === 0) {
+      // Shake animation for empty hearts
+      Animated.sequence([
+        Animated.timing(heartShakeAnim, {
+          toValue: 10,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartShakeAnim, {
+          toValue: -10,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartShakeAnim, {
+          toValue: 10,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+        Animated.timing(heartShakeAnim, {
+          toValue: 0,
+          duration: 50,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+    
+    if (onHeartPress) onHeartPress();
+  };
 
   // Timer para actualizar hearts y tiempo restante
   useEffect(() => {
@@ -76,28 +172,27 @@ const DuolingoTopBar: React.FC<DuolingoTopBarProps> = ({
   }, [gameState.hearts]);
 
   const renderHeartSection = () => {
-    const heartColor = gameState.hearts <= 1 ? '#FF4757' : '#FF6B35';
+    const heartColor = gameState.hearts <= 1 ? DUOLINGO_COLORS.RED.DEFAULT : DUOLINGO_COLORS.RED.LIGHT;
     const showTimer = gameState.hearts < gameState.maxHearts && nextHeartTime > 0;
 
     return (
       <TouchableOpacity 
         style={styles.statContainer} 
-        onPress={() => {
-          audioService.playBubbleTap();
-          if (gameState.hearts <= 0) {
-            audioService.playHeartLoss();
-          }
-          onHeartPress?.();
-        }}
+        onPress={handleHeartPress}
         activeOpacity={0.7}
       >
         <Animated.View 
           style={[
             styles.heartContainer,
-            { transform: [{ scale: heartPulseAnim }] }
+            { 
+              transform: [
+                { scale: heartPulseAnim },
+                { translateX: heartShakeAnim }
+              ] 
+            }
           ]}
         >
-          <Ionicons name="heart" size={20} color={heartColor} />
+          <Ionicons name="heart" size={22} color={heartColor} />
           <Text style={[styles.statText, { color: heartColor }]}>
             {gameState.hearts}
           </Text>
@@ -119,18 +214,20 @@ const DuolingoTopBar: React.FC<DuolingoTopBarProps> = ({
       {/* Gems Section */}
       <TouchableOpacity 
         style={styles.statContainer} 
-        onPress={() => {
-          audioService.playGemEarned();
-          onGemPress?.();
-        }}
+        onPress={handleGemPress}
         activeOpacity={0.7}
       >
-        <View style={styles.gemContainer}>
-          <Ionicons name="diamond" size={18} color="#58CC02" />
-          <Text style={[styles.statText, { color: '#58CC02' }]}>
+        <Animated.View 
+          style={[
+            styles.gemContainer,
+            { transform: [{ scale: gemBounceAnim }] }
+          ]}
+        >
+          <Ionicons name="diamond" size={20} color={DUOLINGO_COLORS.GREEN.DEFAULT} />
+          <Text style={[styles.statText, { color: DUOLINGO_COLORS.GREEN.DEFAULT }]}>
             {gameState.gems}
           </Text>
-        </View>
+        </Animated.View>
       </TouchableOpacity>
 
       {/* Streak Section */}
@@ -142,12 +239,17 @@ const DuolingoTopBar: React.FC<DuolingoTopBarProps> = ({
         }}
         activeOpacity={0.7}
       >
-        <View style={styles.streakContainer}>
-          <Ionicons name="flame" size={18} color="#FF9500" />
-          <Text style={[styles.statText, { color: '#FF9500' }]}>
+        <Animated.View 
+          style={[
+            styles.streakContainer,
+            { transform: [{ scale: streakFlameAnim }] }
+          ]}
+        >
+          <Ionicons name="flame" size={20} color={DUOLINGO_COLORS.YELLOW.DEFAULT} />
+          <Text style={[styles.statText, { color: DUOLINGO_COLORS.YELLOW.DEFAULT }]}>
             {gameState.streak}
           </Text>
-        </View>
+        </Animated.View>
       </TouchableOpacity>
 
       {/* XP Section */}

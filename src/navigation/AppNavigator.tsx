@@ -4,14 +4,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator, TransitionPresets } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import HomeScreen from '../screens/HomeScreen';
 import ChaptersScreen from '../screens/ChaptersScreen';
 import ChapterDetailScreen from '../screens/ChapterDetailScreen';
 import VerseDetailScreen from '../screens/VerseDetailScreen';
-import StudyScreen from '../screens/StudyScreen';
-import ProgressScreen from '../screens/ProgressScreen';
 import SettingsScreen from '../screens/SettingsScreen';
-import FavoritesScreen from '../screens/FavoritesScreen';
 import LessonScreen from '../screens/LessonScreen';
 import LearningPathMapScreen from '../screens/LearningPathMapScreen';
 import ShopScreen from '../screens/ShopScreen';
@@ -58,7 +54,7 @@ const getTabBarIcon = (routeName: string, focused: boolean): keyof typeof Ionico
   return iconName;
 };
 
-// ✨ Navegador de tabs con DuolingoTabBar
+// ✨ Navegador de tabs con DuolingoTabBar (EXACTO COMO DUOLINGO)
 function TabNavigator() {
   return (
     <Tab.Navigator
@@ -67,26 +63,31 @@ function TabNavigator() {
         headerShown: false,
       }}
     >
+      {/* 🏠 LEARN - Pantalla principal como Duolingo (mapa de lecciones) */}
       <Tab.Screen 
         name="Learn" 
-        component={HomeScreen}
+        component={LearningPathMapScreen}
         options={{ tabBarLabel: 'APRENDER' }}
       />
+      {/* 📖 STORIES - Contenido adicional (capítulos) */}
       <Tab.Screen 
-        name="Lessons" 
+        name="Stories" 
         component={ChaptersScreen}
-        options={{ tabBarLabel: 'LECCIONES' }}
+        options={{ tabBarLabel: 'HISTORIAS' }}
       />
+      {/* 🏆 LEADERBOARDS - Competición */}
       <Tab.Screen 
-        name="Leaderboard" 
+        name="Leaderboards" 
         component={LeaderboardScreen}
         options={{ tabBarLabel: 'LIGAS' }}
       />
+      {/* 💎 SHOP - Tienda de poder-ups */}
       <Tab.Screen 
-        name="Quests" 
-        component={StudyScreen as React.FC<any>}
-        options={{ tabBarLabel: 'MISIONES' }}
+        name="Shop" 
+        component={ShopScreen}
+        options={{ tabBarLabel: 'TIENDA' }}
       />
+      {/* 👤 PROFILE - Configuración y progreso */}
       <Tab.Screen 
         name="Profile" 
         component={SettingsScreen}

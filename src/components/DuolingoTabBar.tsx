@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
-import { DUOLINGO_TEXT_VARIANTS } from '../constants/DuolingoTypography';
 
 interface DuolingoTabBarProps {
   state: any;
@@ -28,12 +27,12 @@ const DuolingoTabBar: React.FC<DuolingoTabBarProps> = ({ state, descriptors, nav
     switch (routeName) {
       case 'Learn':
         return focused ? 'home' : 'home-outline';
-      case 'Lessons':
+      case 'Stories':
         return focused ? 'book' : 'book-outline';
-      case 'Leaderboard':
+      case 'Leaderboards':
         return focused ? 'trophy' : 'trophy-outline';
-      case 'Quests':
-        return focused ? 'flag' : 'flag-outline';
+      case 'Shop':
+        return focused ? 'diamond' : 'diamond-outline';
       case 'Profile':
         return focused ? 'person' : 'person-outline';
       default:
@@ -44,9 +43,9 @@ const DuolingoTabBar: React.FC<DuolingoTabBarProps> = ({ state, descriptors, nav
   const getTabLabel = (routeName: string): string => {
     switch (routeName) {
       case 'Learn': return 'APRENDER';
-      case 'Lessons': return 'LECCIONES';
-      case 'Leaderboard': return 'LIGAS';
-      case 'Quests': return 'MISIONES';
+      case 'Stories': return 'HISTORIAS';
+      case 'Leaderboards': return 'LIGAS';
+      case 'Shop': return 'TIENDA';
       case 'Profile': return 'PERFIL';
       default: return routeName.toUpperCase();
     }
@@ -78,7 +77,6 @@ const DuolingoTabBar: React.FC<DuolingoTabBarProps> = ({ state, descriptors, nav
       
       <View style={styles.tabContainer}>
         {state.routes.map((route: any, index: number) => {
-          const { options } = descriptors[route.key];
           const isFocused = state.index === index;
           
           return (
