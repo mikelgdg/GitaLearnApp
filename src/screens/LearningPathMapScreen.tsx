@@ -20,12 +20,7 @@ import { audioService } from '../services/AudioService';
 import { NeomorphicCard } from '../components/NeomorphicCard';
 import { FloatingBubbles, StarParticles, ConfettiExplosion } from '../components/ParticleEffects';
 import { AnimationUtils } from '../utils/animations';
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { ARJU_COLORS } from '../constants/sections';
 import { gitaDataService } from '../services/GitaDataService';
-import { audioService } from '../services/AudioService';
 import { 
   PathNode, 
   LearningPathMap, 

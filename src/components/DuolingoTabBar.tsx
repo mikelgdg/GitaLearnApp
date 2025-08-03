@@ -8,7 +8,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ARJU_COLORS } from '../constants/sections';
+import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
+import { DUOLINGO_TEXT_VARIANTS } from '../constants/DuolingoTypography';
 
 interface DuolingoTabBarProps {
   state: any;
@@ -104,7 +105,7 @@ const DuolingoTabBar: React.FC<DuolingoTabBarProps> = ({ state, descriptors, nav
                   <Ionicons
                     name={getTabIcon(route.name, isFocused)}
                     size={isFocused ? 26 : 22}
-                    color={isFocused ? 'white' : ARJU_COLORS.TEXT_LIGHT}
+                    color={isFocused ? DUOLINGO_COLORS.TEXT.INVERSE : DUOLINGO_COLORS.TEXT.SECONDARY}
                   />
                 </View>
                 
@@ -179,9 +180,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   iconContainerActive: {
-    backgroundColor: ARJU_COLORS.PRIMARY_BLUE,
+    backgroundColor: DUOLINGO_COLORS.GREEN.DEFAULT,
     elevation: 4,
-    shadowColor: ARJU_COLORS.PRIMARY_BLUE,
+    shadowColor: DUOLINGO_COLORS.GREEN.DEFAULT,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -189,11 +190,11 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: ARJU_COLORS.TEXT_LIGHT,
+    color: DUOLINGO_COLORS.TEXT.SECONDARY,
     textAlign: 'center',
   },
   tabLabelActive: {
-    color: ARJU_COLORS.PRIMARY_BLUE,
+    color: DUOLINGO_COLORS.GREEN.DEFAULT,
     fontWeight: 'bold',
   },
   activeIndicator: {
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
     bottom: -2,
     width: 30,
     height: 3,
-    backgroundColor: ARJU_COLORS.PRIMARY_BLUE,
+    backgroundColor: DUOLINGO_COLORS.GREEN.DEFAULT,
     borderRadius: 2,
   },
 });

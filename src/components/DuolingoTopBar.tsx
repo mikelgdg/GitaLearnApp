@@ -8,7 +8,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GameState } from '../types';
-import { ARJU_COLORS } from '../constants/sections';
+import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
+import { DUOLINGO_TEXT_VARIANTS } from '../constants/DuolingoTypography';
 import HeartService from '../services/HeartService';
 import { audioService } from '../services/AudioService';
 
@@ -166,11 +167,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: 'white',
+    backgroundColor: DUOLINGO_COLORS.BACKGROUND.PRIMARY,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: DUOLINGO_COLORS.GRAY[200],
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: DUOLINGO_COLORS.GRAY[900],
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: '#FFF0E6',
+    backgroundColor: DUOLINGO_COLORS.RED.BACKGROUND,
     borderRadius: 15,
     minWidth: 50,
     justifyContent: 'center',
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: '#E8F5E8',
+    backgroundColor: DUOLINGO_COLORS.BLUE.BACKGROUND,
     borderRadius: 15,
     minWidth: 50,
     justifyContent: 'center',
@@ -204,7 +205,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: '#FFF2E6',
+    backgroundColor: DUOLINGO_COLORS.YELLOW.BACKGROUND,
     borderRadius: 15,
     minWidth: 50,
     justifyContent: 'center',
@@ -213,10 +214,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 4,
+    color: DUOLINGO_COLORS.TEXT.PRIMARY,
   },
   timerText: {
     fontSize: 10,
-    color: '#888',
+    color: DUOLINGO_COLORS.TEXT.SECONDARY,
     marginTop: 2,
     fontWeight: '500',
   },
@@ -224,7 +226,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   xpBadge: {
-    backgroundColor: ARJU_COLORS.PRIMARY_BLUE,
+    backgroundColor: DUOLINGO_COLORS.GREEN.DEFAULT,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -232,7 +234,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   xpText: {
-    color: 'white',
+    color: DUOLINGO_COLORS.TEXT.INVERSE,
     fontSize: 14,
     fontWeight: 'bold',
   },
