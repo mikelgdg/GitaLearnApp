@@ -6,7 +6,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ARJU_COLORS } from '../constants/sections';
+import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
 
 // 💫 Shimmer skeleton loader
 interface ShimmerSkeletonProps {
@@ -86,7 +86,7 @@ interface SpinningLoaderProps {
 
 export const SpinningLoader: React.FC<SpinningLoaderProps> = ({
   size = 30,
-  color = ARJU_COLORS.PRIMARY_BLUE,
+  color = DUOLINGO_COLORS.GREEN.DEFAULT,
   speed = 1000,
 }) => {
   const spinAnim = useRef(new Animated.Value(0)).current;
@@ -134,7 +134,7 @@ interface DotsLoaderProps {
 
 export const DotsLoader: React.FC<DotsLoaderProps> = ({
   dotCount = 3,
-  color = ARJU_COLORS.PRIMARY_BLUE,
+  color = DUOLINGO_COLORS.GREEN.DEFAULT,
   size = 8,
 }) => {
   const dots = useRef<Animated.Value[]>([]);
@@ -192,7 +192,7 @@ interface WaveLoaderProps {
 }
 
 export const WaveLoader: React.FC<WaveLoaderProps> = ({
-  color = ARJU_COLORS.PRIMARY_BLUE,
+  color = DUOLINGO_COLORS.GREEN.DEFAULT,
   height = 40,
   width = 60,
 }) => {
@@ -250,7 +250,7 @@ interface PulseLoaderProps {
 }
 
 export const PulseLoader: React.FC<PulseLoaderProps> = ({
-  color = ARJU_COLORS.PRIMARY_BLUE,
+  color = DUOLINGO_COLORS.GREEN.DEFAULT,
   size = 50,
 }) => {
   const pulseAnim = useRef(new Animated.Value(0)).current;
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dot: {
-    backgroundColor: ARJU_COLORS.PRIMARY_BLUE,
+    backgroundColor: DUOLINGO_COLORS.GREEN.DEFAULT,
   },
   waveContainer: {
     flexDirection: 'row',
@@ -342,6 +342,6 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   pulseLoader: {
-    backgroundColor: ARJU_COLORS.PRIMARY_BLUE,
+    backgroundColor: DUOLINGO_COLORS.GREEN.DEFAULT,
   },
 });

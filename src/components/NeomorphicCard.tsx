@@ -6,7 +6,7 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ARJU_COLORS } from '../constants/sections';
+import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
 
 interface NeomorphicCardProps {
   children: React.ReactNode;
@@ -23,7 +23,7 @@ export const NeomorphicCard: React.FC<NeomorphicCardProps> = ({
   variant = 'elevated',
   intensity = 'medium',
   borderRadius = 20,
-  backgroundColor = ARJU_COLORS.BACKGROUND_SAGE,
+  backgroundColor = DUOLINGO_COLORS.BACKGROUND.PRIMARY,
 }) => {
   const getShadowIntensity = () => {
     switch (intensity) {

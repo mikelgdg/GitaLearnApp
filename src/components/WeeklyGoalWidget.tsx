@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ARJU_COLORS } from '../constants/sections';
+import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
 
 interface WeeklyGoalWidgetProps {
   currentXP: number;
@@ -89,7 +89,7 @@ const WeeklyGoalWidget: React.FC<WeeklyGoalWidgetProps> = ({
           colors={
             isCompleted 
               ? ['#58CC02', '#46A302'] 
-              : [ARJU_COLORS.BACKGROUND_SAGE, '#F0F8E8']
+              : [DUOLINGO_COLORS.BACKGROUND.PRIMARY, '#F0F8E8']
           }
           style={styles.gradient}
         >
@@ -99,17 +99,17 @@ const WeeklyGoalWidget: React.FC<WeeklyGoalWidgetProps> = ({
               <Ionicons 
                 name="flame" 
                 size={20} 
-                color={isCompleted ? 'white' : ARJU_COLORS.ACCENT_ORANGE} 
+                color={isCompleted ? 'white' : DUOLINGO_COLORS.YELLOW.DEFAULT} 
               />
               <Text style={[
                 styles.dayText,
-                { color: isCompleted ? 'white' : ARJU_COLORS.TEXT_DARK }
+                { color: isCompleted ? 'white' : DUOLINGO_COLORS.TEXT.PRIMARY }
               ]}>
                 {getDayOfWeek()}
               </Text>
               <Text style={[
                 styles.streakText,
-                { color: isCompleted ? 'white' : ARJU_COLORS.TEXT_LIGHT }
+                { color: isCompleted ? 'white' : DUOLINGO_COLORS.TEXT.SECONDARY }
               ]}>
                 {streakDays} días
               </Text>
@@ -128,7 +128,7 @@ const WeeklyGoalWidget: React.FC<WeeklyGoalWidgetProps> = ({
           <View style={styles.progressSection}>
             <Text style={[
               styles.goalText,
-              { color: isCompleted ? 'white' : ARJU_COLORS.TEXT_DARK }
+              { color: isCompleted ? 'white' : DUOLINGO_COLORS.TEXT.PRIMARY }
             ]}>
               Meta Semanal
             </Text>
@@ -136,13 +136,13 @@ const WeeklyGoalWidget: React.FC<WeeklyGoalWidgetProps> = ({
             <View style={styles.xpContainer}>
               <Text style={[
                 styles.currentXP,
-                { color: isCompleted ? 'white' : ARJU_COLORS.PRIMARY_BLUE }
+                { color: isCompleted ? 'white' : DUOLINGO_COLORS.BLUE.DEFAULT }
               ]}>
                 {currentXP}
               </Text>
               <Text style={[
                 styles.goalXP,
-                { color: isCompleted ? 'rgba(255,255,255,0.8)' : ARJU_COLORS.TEXT_LIGHT }
+                { color: isCompleted ? 'rgba(255,255,255,0.8)' : DUOLINGO_COLORS.TEXT.SECONDARY }
               ]}>
                 / {weeklyGoal} XP
               </Text>
@@ -163,14 +163,14 @@ const WeeklyGoalWidget: React.FC<WeeklyGoalWidgetProps> = ({
                         outputRange: ['0%', '100%'],
                         extrapolate: 'clamp',
                       }),
-                      backgroundColor: isCompleted ? 'white' : ARJU_COLORS.PRIMARY_BLUE,
+                      backgroundColor: isCompleted ? 'white' : DUOLINGO_COLORS.BLUE.DEFAULT,
                     }
                   ]}
                 />
               </View>
               <Text style={[
                 styles.percentageText,
-                { color: isCompleted ? 'white' : ARJU_COLORS.TEXT_LIGHT }
+                { color: isCompleted ? 'white' : DUOLINGO_COLORS.TEXT.SECONDARY }
               ]}>
                 {Math.round(progressPercentage)}%
               </Text>
@@ -179,7 +179,7 @@ const WeeklyGoalWidget: React.FC<WeeklyGoalWidgetProps> = ({
             {/* Motivational Message */}
             <Text style={[
               styles.motivationText,
-              { color: isCompleted ? 'rgba(255,255,255,0.9)' : ARJU_COLORS.TEXT_LIGHT }
+              { color: isCompleted ? 'rgba(255,255,255,0.9)' : DUOLINGO_COLORS.TEXT.SECONDARY }
             ]}>
               {getMotivationalMessage()}
             </Text>

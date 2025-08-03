@@ -10,7 +10,7 @@ import {
   GestureResponderEvent,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ARJU_COLORS } from '../constants/sections';
+import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
 import { AnimationUtils } from '../utils/animations';
 
 interface AnimatedButtonProps {
@@ -84,9 +84,9 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
   const getColors = () => {
     switch (variant) {
       case 'primary':
-        return [ARJU_COLORS.PRIMARY_BLUE, ARJU_COLORS.DUOLINGO_BLUE];
+        return [DUOLINGO_COLORS.GREEN.DEFAULT, DUOLINGO_COLORS.BLUE.DEFAULT];
       case 'secondary':
-        return [ARJU_COLORS.ACCENT_ORANGE, '#E55A2B'];
+        return [DUOLINGO_COLORS.YELLOW.DEFAULT, '#E55A2B'];
       case 'success':
         return ['#4CAF50', '#2E7D32'];
       case 'danger':
@@ -94,7 +94,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
       case 'ghost':
         return ['transparent', 'transparent'];
       default:
-        return [ARJU_COLORS.PRIMARY_BLUE, ARJU_COLORS.DUOLINGO_BLUE];
+        return [DUOLINGO_COLORS.GREEN.DEFAULT, DUOLINGO_COLORS.BLUE.DEFAULT];
     }
   };
 
@@ -128,7 +128,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
             styles.text,
             { 
               fontSize: sizeStyles.fontSize,
-              color: isGhost ? ARJU_COLORS.PRIMARY_BLUE : 'white',
+              color: isGhost ? DUOLINGO_COLORS.GREEN.DEFAULT : 'white',
             },
             textStyle,
           ]}
@@ -173,7 +173,7 @@ export const AnimatedButton: React.FC<AnimatedButtonProps> = ({
           styles.button,
           {
             paddingHorizontal: sizeStyles.paddingHorizontal,
-            borderColor: isGhost ? ARJU_COLORS.PRIMARY_BLUE : 'transparent',
+            borderColor: isGhost ? DUOLINGO_COLORS.GREEN.DEFAULT : 'transparent',
             borderWidth: isGhost ? 2 : 0,
           },
         ]}

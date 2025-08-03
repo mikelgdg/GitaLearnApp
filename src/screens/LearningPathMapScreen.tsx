@@ -12,7 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { ARJU_COLORS } from '../constants/sections';
+import { DUOLINGO_COLORS } from '../constants/DuolingoColors';
 import DuolingoTopBar from '../components/DuolingoTopBar';
 import { HeartService } from '../services/HeartService';
 import { GameState } from '../types';
@@ -202,15 +202,15 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
 
       switch (node.status) {
         case 'locked':
-          return { ...baseStyle, backgroundColor: ARJU_COLORS.TEXT_LIGHT };
+          return { ...baseStyle, backgroundColor: DUOLINGO_COLORS.TEXT.SECONDARY };
         case 'unlocked':
-          return { ...baseStyle, backgroundColor: ARJU_COLORS.PRIMARY_BLUE };
+          return { ...baseStyle, backgroundColor: DUOLINGO_COLORS.BLUE.DEFAULT };
         case 'completed':
-          return { ...baseStyle, backgroundColor: ARJU_COLORS.ACCENT_ORANGE };
+          return { ...baseStyle, backgroundColor: DUOLINGO_COLORS.YELLOW.DEFAULT };
         case 'mastered':
           return { ...baseStyle, backgroundColor: '#FFD700' };
         default:
-          return { ...baseStyle, backgroundColor: ARJU_COLORS.TEXT_LIGHT };
+          return { ...baseStyle, backgroundColor: DUOLINGO_COLORS.TEXT.SECONDARY };
       }
     };
 
@@ -253,7 +253,7 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
           <Ionicons 
             name={getBubbleIcon()} 
             size={24} 
-            color={node.status === 'locked' ? ARJU_COLORS.TEXT_LIGHT : 'white'} 
+            color={node.status === 'locked' ? DUOLINGO_COLORS.TEXT.SECONDARY : 'white'} 
           />
           
           {/* Mastery Stars */}
@@ -268,7 +268,7 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
           {/* Lesson Number */}
           <Text style={[
             styles.lessonNumber,
-            { color: node.status === 'locked' ? ARJU_COLORS.TEXT_LIGHT : 'white' }
+            { color: node.status === 'locked' ? DUOLINGO_COLORS.TEXT.SECONDARY : 'white' }
           ]}>
             {data.title}
           </Text>
@@ -284,10 +284,10 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
 
     const getCheckpointColor = () => {
       switch (data.difficulty) {
-        case 'easy': return ARJU_COLORS.DUOLINGO_GREEN;
-        case 'medium': return ARJU_COLORS.ACCENT_ORANGE;
+        case 'easy': return DUOLINGO_COLORS.GREEN.DEFAULT;
+        case 'medium': return DUOLINGO_COLORS.YELLOW.DEFAULT;
         case 'hard': return '#FF4B4B';
-        default: return ARJU_COLORS.DUOLINGO_BLUE;
+        default: return DUOLINGO_COLORS.BLUE.DEFAULT;
       }
     };
 
@@ -310,11 +310,11 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
         <Ionicons 
           name="trophy" 
           size={32} 
-          color={node.status === 'locked' ? ARJU_COLORS.TEXT_LIGHT : 'white'} 
+          color={node.status === 'locked' ? DUOLINGO_COLORS.TEXT.SECONDARY : 'white'} 
         />
         <Text style={[
           styles.checkpointTitle,
-          { color: node.status === 'locked' ? ARJU_COLORS.TEXT_LIGHT : 'white' }
+          { color: node.status === 'locked' ? DUOLINGO_COLORS.TEXT.SECONDARY : 'white' }
         ]}>
           CHECKPOINT
         </Text>
@@ -385,7 +385,7 @@ const LearningPathMapScreen: React.FC<LearningPathMapScreenProps> = ({ navigatio
       <StarParticles starCount={12} twinkleSpeed={3000} />
       
       <LinearGradient
-        colors={[ARJU_COLORS.BACKGROUND_SAGE, '#F0F8E8']}
+        colors={[DUOLINGO_COLORS.BACKGROUND.PRIMARY, '#F0F8E8']}
         style={styles.background}
       >
         <ScrollView
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   },
   notchSafeArea: {
     height: 44, // Espacio para cámaras frontales integradas
-    backgroundColor: ARJU_COLORS.BACKGROUND_SAGE,
+    backgroundColor: DUOLINGO_COLORS.BACKGROUND.PRIMARY,
   },
   background: {
     flex: 1,
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   },
   sectionDescription: {
     fontSize: 14,
-    color: ARJU_COLORS.TEXT_LIGHT,
+    color: DUOLINGO_COLORS.TEXT.SECONDARY,
     marginTop: 4,
   },
   sectionProgress: {
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: ARJU_COLORS.TEXT_DARK,
+    color: DUOLINGO_COLORS.TEXT.PRIMARY,
   },
   progressBarContainer: {
     width: 60,
@@ -511,12 +511,12 @@ const styles = StyleSheet.create({
     borderColor: '#CCCCCC',
   },
   bubbleUnlocked: {
-    backgroundColor: ARJU_COLORS.DUOLINGO_BLUE,
+    backgroundColor: DUOLINGO_COLORS.BLUE.DEFAULT,
     borderWidth: 3,
     borderColor: '#0FA0CE',
   },
   bubbleCompleted: {
-    backgroundColor: ARJU_COLORS.DUOLINGO_GREEN,
+    backgroundColor: DUOLINGO_COLORS.GREEN.DEFAULT,
     borderWidth: 3,
     borderColor: '#46A302',
   },
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
   connectionLine: {
     position: 'absolute',
     width: 4,
-    backgroundColor: ARJU_COLORS.TEXT_LIGHT + '40',
+    backgroundColor: DUOLINGO_COLORS.TEXT.SECONDARY + '40',
     borderRadius: 2,
   },
 

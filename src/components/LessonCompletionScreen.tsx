@@ -116,7 +116,7 @@ export default function LessonCompletionScreen({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={ARJU_COLORS.BACKGROUND_SAGE} />
+      <StatusBar barStyle="light-content" backgroundColor={DUOLINGO_COLORS.BACKGROUND.PRIMARY} />
       
       {/* ✨ Confetti Effect */}
       {showConfetti && (
@@ -125,10 +125,9 @@ export default function LessonCompletionScreen({
             trigger={showConfetti}
             particleCount={50}
             colors={[
-              ARJU_COLORS.PRIMARY_BLUE,
-              ARJU_COLORS.ACCENT_ORANGE,
-              ARJU_COLORS.DUOLINGO_GREEN,
-              '#FFC800'
+              DUOLINGO_COLORS.GREEN.DEFAULT,
+              DUOLINGO_COLORS.YELLOW.DEFAULT,
+              DUOLINGO_COLORS.GREEN.DEFAULT,
             ]}
           />
         </View>
@@ -194,20 +193,20 @@ export default function LessonCompletionScreen({
             icon="⭐"
             label="XP Ganado"
             animatedValue={animatedValues.xpCount}
-            color={ARJU_COLORS.PRIMARY_BLUE}
+            color={DUOLINGO_COLORS.BLUE.DEFAULT}
           />
           <StatItem
             icon="💎"
             label="Gemas"
             animatedValue={animatedValues.gemsCount}
-            color={ARJU_COLORS.ACCENT_ORANGE}
+            color={DUOLINGO_COLORS.YELLOW.DEFAULT}
           />
           <StatItem
             icon="🎯"
             label="Precisión"
             animatedValue={animatedValues.accuracyCount}
             suffix="%"
-            color={ARJU_COLORS.DUOLINGO_GREEN}
+            color={DUOLINGO_COLORS.GREEN.DEFAULT}
           />
         </View>
 
@@ -306,7 +305,7 @@ const StatItem: React.FC<{
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: ARJU_COLORS.BACKGROUND_SAGE,
+    backgroundColor: DUOLINGO_COLORS.BACKGROUND.SECONDARY,
     paddingTop: Platform.OS === 'ios' ? 60 : StatusBar.currentHeight ? StatusBar.currentHeight + 40 : 40, // 🔝 Espacio extra para cámara frontal
   },
   container: {
@@ -345,12 +344,12 @@ const styles = StyleSheet.create({
   mascotPlaceholderText: {
     fontSize: 16,
     fontWeight: '600',
-    color: ARJU_COLORS.TEXT_PRIMARY,
+    color: DUOLINGO_COLORS.TEXT.PRIMARY,
     marginBottom: 4,
   },
   mascotSubText: {
     fontSize: 12,
-    color: ARJU_COLORS.TEXT_LIGHT,
+    color: DUOLINGO_COLORS.TEXT.SECONDARY,
     fontStyle: 'italic',
   },
 
@@ -368,7 +367,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: ARJU_COLORS.DUOLINGO_GREEN,
+    backgroundColor: DUOLINGO_COLORS.GREEN.DEFAULT,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
@@ -380,13 +379,13 @@ const styles = StyleSheet.create({
   completionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: ARJU_COLORS.TEXT_PRIMARY,
+    color: DUOLINGO_COLORS.TEXT.PRIMARY,
     textAlign: 'center',
     marginBottom: 5,
   },
   completionSubtitle: {
     fontSize: 16,
-    color: ARJU_COLORS.TEXT_LIGHT,
+    color: DUOLINGO_COLORS.TEXT.SECONDARY,
     textAlign: 'center',
   },
 
@@ -416,7 +415,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: ARJU_COLORS.TEXT_LIGHT,
+    color: DUOLINGO_COLORS.TEXT.SECONDARY,
     textAlign: 'center',
   },
 
@@ -435,7 +434,7 @@ const styles = StyleSheet.create({
   streakText: {
     fontSize: 16,
     fontWeight: '600',
-    color: ARJU_COLORS.PRIMARY_BLUE,
+    color: DUOLINGO_COLORS.BLUE.DEFAULT,
     marginBottom: 12,
   },
   streakProgress: {
@@ -447,7 +446,7 @@ const styles = StyleSheet.create({
   },
   streakProgressFill: {
     height: '100%',
-    backgroundColor: ARJU_COLORS.PRIMARY_BLUE,
+    backgroundColor: DUOLINGO_COLORS.BLUE.DEFAULT,
     borderRadius: 4,
   },
 
@@ -459,7 +458,7 @@ const styles = StyleSheet.create({
   motivationalText: {
     fontSize: 16,
     fontStyle: 'italic',
-    color: ARJU_COLORS.TEXT_PRIMARY,
+    color: DUOLINGO_COLORS.TEXT.PRIMARY,
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -471,7 +470,7 @@ const styles = StyleSheet.create({
   achievementsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: ARJU_COLORS.TEXT_PRIMARY,
+    color: DUOLINGO_COLORS.TEXT.PRIMARY,
     textAlign: 'center',
     marginBottom: 15,
   },
@@ -491,12 +490,12 @@ const styles = StyleSheet.create({
   achievementTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: ARJU_COLORS.TEXT_PRIMARY,
+    color: DUOLINGO_COLORS.TEXT.PRIMARY,
     marginBottom: 4,
   },
   achievementDescription: {
     fontSize: 14,
-    color: ARJU_COLORS.TEXT_LIGHT,
+    color: DUOLINGO_COLORS.TEXT.SECONDARY,
   },
 
   // 🚀 Button
